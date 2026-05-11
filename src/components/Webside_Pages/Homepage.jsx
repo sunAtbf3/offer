@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useLayoutEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import {
@@ -17,31 +17,27 @@ const Homepage = () => {
   const dispatch = useDispatch();
 
   const categories = useSelector(selectAllCategories);
-  // console.log(categories);
 
   const loading = useSelector(selectCategoriesLoading);
   const error = useSelector(selectCategoriesError);
   const location = useLocation();
 
-  useEffect(() => {
-    // console.log('🏠 [Homepage] Fetching all categories...');
+  // Single owner for category list: dispatch before paint so children do not
+  // flash an empty state before Redux pending runs.
+  useLayoutEffect(() => {
     dispatch(fetchAllCategories());
   }, [dispatch]);
-// ✅ Added location hook
 
-// ✅ Scroll effect on hash change
-useEffect(() => {
-  if (location.hash === '#best-sellers') {
-    document.getElementById('best-sellers')?.scrollIntoView({ 
-      behavior: 'smooth' 
-    });
-  }
-}, [location]);
+  useEffect(() => {
+    if (location.hash === '#best-sellers') {
+      document.getElementById('best-sellers')?.scrollIntoView({
+        behavior: 'smooth',
+      });
+    }
+  }, [location]);
 
-// ✅ Wrapped BestSellers with ID
-<section id="best-sellers">
-  <BestSellers />
-</section>
+  const showCategoryRows =
+    !error.categories && !loading.categories && Array.isArray(categories) && categories.length > 0;
 
   return (
     <>
@@ -52,31 +48,18 @@ useEffect(() => {
       <main className="container mx-auto px-4 pt- pb-20">
         <Categories />
         <PriceBanners />
-        {/* <BestSellers /> */}
         <section id="best-sellers">
           <BestSellers />
         </section>
 
-        {/* ✅ Dynamic — driven by DB, zero hardcoding */}
-        {loading.categories && (
-          <div className="text-center py-10 text-gray-400">
-            Loading categories...
-          </div>
-        )}
-
-        {error.categories && (
-          <div className="text-center py-10 text-red-400">
-            Failed to load categories: {error.categories.message}
-          </div>
-        )}
-
-        {categories.map((cat) => (
-          <CategorySection
-            key={cat.slug}
-            slug={cat.slug}
-            title={cat.name}
-          />
-        ))}
+        {showCategoryRows &&
+          categories.map((cat) => (
+            <CategorySection
+              key={cat.slug}
+              slug={cat.slug}
+              title={cat.name}
+            />
+          ))}
       </main>
     </>
   );

@@ -1,37 +1,23 @@
-import React from "react";
+import React, { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
   fetchAllCategories,
   selectHierarchicalCategories,
 } from "../REDUX_FEATURES/REDUX_SLICES/userCategoriesSlice";
-import { useEffect } from "react";
-import { useState } from "react";
 
 const Categories = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [endIndex, setendIndex] = useState();
-  const handleCategories = (category)=>{
 
-    setcategories1([...categories1, slicedCategories])
-    setendIndex( prev => prev + 5);
-    
-    const slug =
-      category.slug || category.name?.toLowerCase().replace(/\s+/g, "-");
-    navigate(`/category/${slug}`);
-  }
   const categories = useSelector(selectHierarchicalCategories);
-const visibleCategories = categories.slice(0, endIndex);
-  // console.log("categories", categories.slice(0,endIndex+1));
-  // console.log("categories", categories);
-  
+  const visibleCategories = categories.slice(0, endIndex);
+
   const { loading, error } = useSelector((state) => state.userCategories);
 
-  useEffect(() => {
-    dispatch(fetchAllCategories()).catch((err) => {
-      console.error("❌ Categories fetch failed:", err);
-    });
+  const handleRetryList = useCallback(() => {
+    dispatch(fetchAllCategories());
   }, [dispatch]);
 
   const handleCategoryClick = (category) => {
@@ -61,13 +47,37 @@ const visibleCategories = categories.slice(0, endIndex);
     );
   }
 
-  // ── Error ────────────────────────────────────────────────────────────────
+  // ── Error (list fetch) — same recovery idea as BestSellers / CategorySection ─
   if (error.categories) {
-    console.error("Failed to load categories:", error.categories);
-    return null;
+    return (
+      <div className="w-full bg-white py-8 md:py-16">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-row items-center justify-center mb-8 md:mb-12">
+            <h3 className="text-xl sm:text-2xl md:text-4xl font-lato flex items-center gap-2 md:gap-4 text-gray-900">
+              <span className="w-2 h-8 md:w-3 md:h-12 bg-[#f7a221] rounded-full shadow-[0_0_15px_rgba(247,162,33,0.3)]" />
+              Top Categories
+            </h3>
+          </div>
+          <div className="mx-auto max-w-lg rounded-xl border-2 border-dashed border-zinc-200 py-12 px-6 text-center">
+            <p className="text-zinc-600 font-medium mb-1">Could not load categories</p>
+            <p className="text-zinc-400 text-xs mb-6">
+              {error.categories?.message || "Please check your connection and try again."}
+            </p>
+            <button
+              type="button"
+              onClick={handleRetryList}
+              disabled={loading.categories}
+              className="bg-zinc-900 text-white px-8 py-3 text-xs font-bold uppercase tracking-widest hover:bg-[#f7a221] hover:text-zinc-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading.categories ? "Retrying…" : "Try Again"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  // ── Empty ────────────────────────────────────────────────────────────────
+  // ── Empty (loaded successfully, no categories) ───────────────────────────
   if (!categories || categories.length === 0) return null;
 
   // ── Main Render ──────────────────────────────────────────────────────────
