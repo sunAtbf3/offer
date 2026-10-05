@@ -60,6 +60,8 @@ const Footer = () => {
         // { label: "Influencer Form", path: "/influencer-form" },
         { label: "Customer Care", path: "/customer-care" },
         { label: "Influencer Form", path: "/Influencer" },
+        // Ecomm only — this Footer is not used on wholesale
+        { label: "Become a Dropshipper", path: "/become-dropshipper" },
       ]
     },
     {

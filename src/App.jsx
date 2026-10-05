@@ -12,6 +12,7 @@ import LogRegister from "./components/USER_LOGIN_SEGMENT/LogRegister";
 
 import Homepage from "./components/Webside_Pages/Homepage";
 import CustomerCare from "./components/Webside_Pages/CustomerCare";
+import BecomeDropshipper from "./components/Webside_Pages/BecomeDropshipper";
 import CatProducts from "./User_Side_Web_Interface/Product_segment/CatPro_segment/CatProducts";
 import ProductDetail from "./User_Side_Web_Interface/Product_segment/Productdetail";
 import ShopByPrice from "./User_Side_Web_Interface/ShopByPriceSegment/ShopByPrice";
@@ -243,6 +244,7 @@ const AppContent = () => {
                 {/* ── Public routes ──────────────────────────────────────── */}
                 <Route path="/"                element={<Homepage onOpenAuth={openAuthModal} />} />
                 <Route path="/customer-care"   element={<CustomerCare onOpenAuth={openAuthModal} />} />
+                <Route path="/become-dropshipper" element={<BecomeDropshipper />} />
                 <Route path="/category/:slug"  element={<CatProducts />} />
                 <Route path="/contact"  element={<ContactUs />} />
                 <Route path="/products/:slug"  element={<ProductDetail openAuthModal={openAuthModal} isLoggedIn={isLoggedIn} />} />

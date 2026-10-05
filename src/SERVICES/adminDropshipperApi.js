@@ -259,3 +259,52 @@ export async function getAdminDropshipOrder(orderId) {
   const res = await axiosInstance.get(`${BASE}/orders/${encodeURIComponent(orderId)}`);
   return res.data;
 }
+
+/** —— Phase A: dropshipper auth / subscription admin APIs —— */
+
+export async function getDropshipperSettings() {
+  const res = await axiosInstance.get(`${BASE}/settings`);
+  return res.data;
+}
+
+export async function updateDropshipperSettings(body) {
+  const res = await axiosInstance.patch(`${BASE}/settings`, body);
+  return res.data;
+}
+
+export async function listDropshipperAccounts(params = {}) {
+  const res = await axiosInstance.get(`${BASE}/accounts`, { params });
+  return res.data;
+}
+
+export async function getDropshipperAccount(id) {
+  const res = await axiosInstance.get(`${BASE}/accounts/${encodeURIComponent(id)}`);
+  return res.data;
+}
+
+export async function listDropshipperRequests(params = {}) {
+  const res = await axiosInstance.get(`${BASE}/requests`, { params });
+  return res.data;
+}
+
+export async function getDropshipperRequest(id) {
+  const res = await axiosInstance.get(`${BASE}/requests/${encodeURIComponent(id)}`);
+  return res.data;
+}
+
+export async function approveDropshipperRequest(id, body = {}) {
+  const res = await axiosInstance.post(
+    `${BASE}/requests/${encodeURIComponent(id)}/approve`,
+    body
+  );
+  return res.data;
+}
+
+export async function rejectDropshipperRequest(id, body) {
+  const res = await axiosInstance.post(
+    `${BASE}/requests/${encodeURIComponent(id)}/reject`,
+    body
+  );
+  return res.data;
+}
+

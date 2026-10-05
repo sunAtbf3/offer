@@ -4,9 +4,11 @@ import { USER_TAB_REGISTRY } from "./ADMIN_TABS/CUSTOMER_SEGMENT/userTabRegistry
 import { WebPageRegistry } from "./ADMIN_TABS//WEBSITE_TAB/WebPageRegistry";
 import { DEMO_TAB_REGISTRY } from "./ADMIN_TABS/DEMO/demoTabRegistry";
 import { REVIEW_TAB_REGISTRY } from "./ADMIN_TABS/CUSTOMER_REVIEW/reviewTabRegistry";
+import { DROPSHIPPER_TAB_REGISTRY } from "./ADMIN_TABS/DROPSHIPPER_TAB/dropshipperTabRegistry";
 
 
 const OrderTab = lazy(() => import("./ADMIN_TABS/OrderTab/OrderTab"));
+const DropshipperDashboard = lazy(() => import("./ADMIN_TABS/DROPSHIPPER_TAB/DropshipperDashboard"));
 const ReturnsRefundsTab = lazy(() => import("./ADMIN_TABS/OrderTab/ReturnsRefundsTab"));
 const RtoTab = lazy(() => import("./ADMIN_TABS/RtoTab/RtoTab"));
 const ProductsTab = lazy(() => import("./ADMIN_TABS/ProductsTab"));
@@ -176,6 +178,14 @@ export const TAB_REGISTRY = [
     component: DemoDashboard,
     badge: null,
     subItems: DEMO_TAB_REGISTRY,
+  },
+  {
+    id: "dropshippers",
+    label: "Dropshippers",
+    icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4",
+    component: DropshipperDashboard,
+    badge: null,
+    subItems: DROPSHIPPER_TAB_REGISTRY,
   },
 
   // ── Drop new tabs here only ──────────────────────────────────────────────
