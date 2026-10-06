@@ -5,9 +5,10 @@ import { WebPageRegistry } from "./ADMIN_TABS//WEBSITE_TAB/WebPageRegistry";
 import { DEMO_TAB_REGISTRY } from "./ADMIN_TABS/DEMO/demoTabRegistry";
 import { REVIEW_TAB_REGISTRY } from "./ADMIN_TABS/CUSTOMER_REVIEW/reviewTabRegistry";
 import { DROPSHIPPER_TAB_REGISTRY } from "./ADMIN_TABS/DROPSHIPPER_TAB/dropshipperTabRegistry";
+import { ORDERS_TAB_REGISTRY } from "./ADMIN_TABS/OrderTab/ordersTabRegistry";
 
 
-const OrderTab = lazy(() => import("./ADMIN_TABS/OrderTab/OrderTab"));
+const OrdersDashboard = lazy(() => import("./ADMIN_TABS/OrderTab/OrdersDashboard"));
 const DropshipperDashboard = lazy(() => import("./ADMIN_TABS/DROPSHIPPER_TAB/DropshipperDashboard"));
 const ReturnsRefundsTab = lazy(() => import("./ADMIN_TABS/OrderTab/ReturnsRefundsTab"));
 const RtoTab = lazy(() => import("./ADMIN_TABS/RtoTab/RtoTab"));
@@ -35,8 +36,9 @@ export const TAB_REGISTRY = [
     id: "orders",
     label: "Orders",
     icon: "M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4H6zM3 6h18M16 10a4 4 0 01-8 0",
-    component: OrderTab,
+    component: OrdersDashboard,
     badge: null,
+    subItems: ORDERS_TAB_REGISTRY,
   },
   {
     id: "returns_refunds",

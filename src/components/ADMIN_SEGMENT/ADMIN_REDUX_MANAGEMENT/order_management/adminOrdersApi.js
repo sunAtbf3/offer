@@ -1,19 +1,26 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import axiosInstance, { AUTH_CONTEXT_ADMIN } from '../../../../SERVICES/axiosInstance';
+import { getAdminOrderStorefrontOverride } from './adminOrderStorefront';
 
 /**
  * Axios adapter for RTK Query — matches userAnalyticsApi pattern; never use raw axios in components.
+ * Injects x-storefront from Dropshipper Orders tab override when set.
  */
 const axiosBaseQuery =
   ({ baseUrl } = { baseUrl: '' }) =>
   async ({ url, method, data, params, headers, responseType }) => {
     try {
+      const storefrontOverride = getAdminOrderStorefrontOverride();
+      const mergedHeaders = { ...headers };
+      if (storefrontOverride) {
+        mergedHeaders['x-storefront'] = storefrontOverride;
+      }
       const result = await axiosInstance({
         url: baseUrl + url,
         method,
         data,
         params,
-        headers: { ...headers },
+        headers: mergedHeaders,
         authContext: AUTH_CONTEXT_ADMIN,
         ...(responseType ? { responseType } : {}),
       });
@@ -47,6 +54,11 @@ export const adminOrdersApi = createApi({
   baseQuery: axiosBaseQuery({ baseUrl: '' }),
   tagTypes: ['AdminOrdersSummary', 'AdminOrdersList', 'AdminOrderTracking', 'AdminRtoList', 'AdminRtoAnalytics'],
   keepUnusedDataFor: 30,
+  // Separate RTK cache buckets for ecomm vs dropship order scopes
+  serializeQueryArgs: ({ endpointName, queryArgs }) => {
+    const sf = getAdminOrderStorefrontOverride() || 'ecomm';
+    return `${endpointName}(${JSON.stringify(queryArgs ?? {})})::sf=${sf}`;
+  },
   endpoints: (builder) => ({
     /**
      * Dashboard cards + tab counts.

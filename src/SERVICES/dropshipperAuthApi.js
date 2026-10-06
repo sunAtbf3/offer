@@ -27,6 +27,8 @@ export async function startDropshipperRegistration(body) {
 
 /**
  * Create registration request + Razorpay order.
+ * Pass FormData with fields + idProof / businessAddressProof files (Cloudinary),
+ * or a plain object (must already include proof https URLs).
  * Returns { requestId, razorpay: { keyId, orderId, amount, currency }, subscription }
  */
 export async function createDropshipperRegistrationPayment(body) {

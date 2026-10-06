@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getAdminOrderStorefrontOverride } from "../components/ADMIN_SEGMENT/ADMIN_REDUX_MANAGEMENT/order_management/adminOrderStorefront";
 import {
   isAdminTokenCompatible,
   isCustomerTokenCompatible,
@@ -269,6 +270,15 @@ axiosInstance.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // Admin Dropshipper Orders tab: override default ecomm storefront for order ops only
+    if (authContext === AUTH_CONTEXT_ADMIN) {
+      const sf = getAdminOrderStorefrontOverride();
+      if (sf) {
+        config.headers['x-storefront'] = sf;
+      }
+    }
+
     return config;
   },
   (error) => Promise.reject(error)
