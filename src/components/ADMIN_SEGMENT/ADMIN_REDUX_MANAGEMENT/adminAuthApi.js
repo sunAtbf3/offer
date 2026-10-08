@@ -14,13 +14,17 @@ const ADMIN_ECOMM_PORTAL = 'admin-ecomm';
 
 // ✅ Wrap axiosInstance so RTK Query can use it
 // This means ALL admin API calls now go through your refresh interceptor
-const axiosBaseQuery = () => async ({ url, method = 'GET', body, params }) => {
+const axiosBaseQuery = () => async ({ url, method = 'GET', body, params, headers }) => {
     try {
         const result = await axiosInstance({
             url,
             method,
             data: body,
             params,
+            headers: {
+                'x-auth-portal': ADMIN_ECOMM_PORTAL,
+                ...(headers || {}),
+            },
             authContext: AUTH_CONTEXT_ADMIN,
         });
         return { data: result.data };

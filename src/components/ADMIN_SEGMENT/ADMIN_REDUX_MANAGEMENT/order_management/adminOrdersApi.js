@@ -1,6 +1,22 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import axiosInstance, { AUTH_CONTEXT_ADMIN } from '../../../../SERVICES/axiosInstance';
 import { getAdminOrderStorefrontOverride } from './adminOrderStorefront';
+import { getAdminOrderDropshipperFilter } from './adminOrderDropshipperFilter';
+import { withShippingSpeedScopeParam, getAdminOrderShippingSpeedScope } from './adminOrderShippingSpeedScope';
+
+function withDropshipperIdParam(params = {}) {
+  const next = { ...params };
+  const fromArg = next.dropshipperId != null ? String(next.dropshipperId).trim() : '';
+  const fromOverride = getAdminOrderDropshipperFilter();
+  const id = fromArg || fromOverride || '';
+  if (id) next.dropshipperId = id;
+  else delete next.dropshipperId;
+  return next;
+}
+
+function withAdminOrderListParams(params = {}) {
+  return withShippingSpeedScopeParam(withDropshipperIdParam(params));
+}
 
 /**
  * Axios adapter for RTK Query — matches userAnalyticsApi pattern; never use raw axios in components.
@@ -54,10 +70,13 @@ export const adminOrdersApi = createApi({
   baseQuery: axiosBaseQuery({ baseUrl: '' }),
   tagTypes: ['AdminOrdersSummary', 'AdminOrdersList', 'AdminOrderTracking', 'AdminRtoList', 'AdminRtoAnalytics'],
   keepUnusedDataFor: 30,
-  // Separate RTK cache buckets for ecomm vs dropship order scopes
+  // Separate RTK cache buckets for ecomm vs dropship (+ optional dropshipper) scopes
   serializeQueryArgs: ({ endpointName, queryArgs }) => {
     const sf = getAdminOrderStorefrontOverride() || 'ecomm';
-    return `${endpointName}(${JSON.stringify(queryArgs ?? {})})::sf=${sf}`;
+    const ds =
+      (queryArgs && queryArgs.dropshipperId) || getAdminOrderDropshipperFilter() || '';
+    const speed = getAdminOrderShippingSpeedScope() || 'standard';
+    return `${endpointName}(${JSON.stringify(queryArgs ?? {})})::sf=${sf}::ds=${ds}::speed=${speed}`;
   },
   endpoints: (builder) => ({
     /**
@@ -79,7 +98,7 @@ export const adminOrdersApi = createApi({
         return {
           url: '/admin/orders/summary',
           method: 'GET',
-          params,
+          params: withAdminOrderListParams(params),
         };
       },
       providesTags: [{ type: 'AdminOrdersSummary', id: 'SUMMARY' }],
@@ -104,7 +123,7 @@ export const adminOrdersApi = createApi({
         return {
           url: '/admin/orders/auto-sync-statuses',
           method: 'POST',
-          params,
+          params: withDropshipperIdParam(params),
         };
       },
       invalidatesTags: (result, error) => {
@@ -142,7 +161,7 @@ export const adminOrdersApi = createApi({
         return {
           url: '/admin/orders',
           method: 'GET',
-          params,
+          params: withAdminOrderListParams(params),
         };
       },
       providesTags: (result) =>
@@ -565,6 +584,32 @@ export const adminOrdersApi = createApi({
       ],
     }),
 
+    /**
+     * Warehouse self-pickup: cancel courier booking if any, mark delivered + fulfillmentMode=self_pickup.
+     * POST /api/orders/admin/items/:orderId/fulfillment/self-pickup
+     */
+    adminFulfillmentSelfPickup: builder.mutation({
+      query: ({ orderId, note } = {}) => ({
+        url: `/orders/admin/items/${encodeURIComponent(String(orderId))}/fulfillment/self-pickup`,
+        method: 'POST',
+        data: note ? { note } : {},
+      }),
+      invalidatesTags: (result, error, arg) => {
+        if (error) return [];
+        const id = arg?.orderId;
+        return [
+          { type: 'AdminOrdersList', id: 'PARTIAL' },
+          { type: 'AdminOrdersSummary', id: 'SUMMARY' },
+          ...(id
+            ? [
+                { type: 'AdminOrdersList', id },
+                { type: 'AdminOrderTracking', id },
+              ]
+            : []),
+        ];
+      },
+    }),
+
     adminFulfillmentRetryPickup: builder.mutation({
       query: (orderId) => ({
         url: `/orders/admin/items/${encodeURIComponent(String(orderId))}/fulfillment/retry-pickup`,
@@ -740,6 +785,7 @@ export const {
   useAdminFulfillmentManifestMutation,
   useAdminFulfillmentShippingLabelMutation,
   useAdminFulfillmentCancelShipmentMutation,
+  useAdminFulfillmentSelfPickupMutation,
   useAdminFulfillmentRetryPickupMutation,
   useAdminBulkApprovalConfirmMutation,
   useAdminBulkApprovalCancelMutation,

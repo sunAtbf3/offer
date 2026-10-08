@@ -49,6 +49,7 @@ import {
   isPackingViewerRole,
   PACKING_VIEWER_ORDER_TABS,
 } from "../../roles";
+import { getAdminOrderStorefrontOverride } from "../../ADMIN_REDUX_MANAGEMENT/order_management/adminOrderStorefront";
 
 const TAB_ORDER = [
   // "All" — intentionally hidden; summary cards still exclude cancelled via backend totals.
@@ -61,7 +62,14 @@ const TAB_ORDER = [
   "RTO",
   "Cancelled",
   "Pickup Exception",
+  "Self pickup",
 ];
+
+/** Self pickup tab + action: ecomm / wholesale only (not dropship). */
+function isSelfPickupStorefrontAllowed(storefront) {
+  const sf = String(storefront || "ecomm").toLowerCase().trim();
+  return sf === "ecomm" || sf === "wholesale";
+}
 
 const PACKING_VIEWER_DEFAULT_TAB = "Confirmed";
 
@@ -164,7 +172,14 @@ const OrderTab = () => {
   const ui = useSelector((s) => s.adminOrdersUi);
   const adminUser = useSelector(selectAdminUser);
   const isPackingViewer = isPackingViewerRole(adminUser?.role);
-  const visibleTabOrder = isPackingViewer ? PACKING_VIEWER_ORDER_TABS : TAB_ORDER;
+  // Dropshipper Orders sets override before mount; null → ecomm (default Orders tab).
+  const storefrontScope = getAdminOrderStorefrontOverride() || "ecomm";
+  const selfPickupAllowed = isSelfPickupStorefrontAllowed(storefrontScope);
+  const visibleTabOrder = useMemo(() => {
+    const base = isPackingViewer ? PACKING_VIEWER_ORDER_TABS : TAB_ORDER;
+    if (selfPickupAllowed) return base;
+    return base.filter((label) => label !== "Self pickup");
+  }, [isPackingViewer, selfPickupAllowed]);
   const dateFilterActive = isOrdersDateFilterActive(ui.datePreset);
   const searchActive = Boolean(String(ui.search || "").trim());
 
@@ -433,6 +448,13 @@ const OrderTab = () => {
       dispatch(setActiveTabLabel(isPackingViewer ? PACKING_VIEWER_DEFAULT_TAB : DEFAULT_ORDER_TAB_LABEL));
     }
   }, [ui.activeTabLabel, dispatch, isPackingViewer]);
+
+  /** Self pickup is ecomm/wholesale only — leave tab if storefront is dropship. */
+  useEffect(() => {
+    if (!selfPickupAllowed && ui.activeTabLabel === "Self pickup") {
+      dispatch(setActiveTabLabel(DEFAULT_ORDER_TAB_LABEL));
+    }
+  }, [selfPickupAllowed, ui.activeTabLabel, dispatch]);
 
   /** Packing viewer: only Confirmed + Ready to Ship. */
   useEffect(() => {

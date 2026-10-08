@@ -67,12 +67,12 @@ const getAuthContext = (config = {}) => {
     return AUTH_CONTEXT_ADMIN;
   }
 
-  const hasAdminToken = Boolean(localStorage.getItem(ADMIN_ACCESS_TOKEN_KEY));
-  const hasUserToken = Boolean(localStorage.getItem(USER_ACCESS_TOKEN_KEY));
+  // Admin JWT only when the admin app is active (or explicit admin API above).
+  // NEVER fall back to adminAccessToken on the customer storefront when the
+  // user token is missing — that caused dual-tab privilege bleed into /auth/me.
   const adminAppActive =
     typeof window !== "undefined" && isAdminAppPath(window.location.pathname);
-
-  if (hasAdminToken && (adminAppActive || !hasUserToken)) {
+  if (adminAppActive && localStorage.getItem(ADMIN_ACCESS_TOKEN_KEY)) {
     return AUTH_CONTEXT_ADMIN;
   }
 

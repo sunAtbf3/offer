@@ -9,7 +9,8 @@ import {
   ShoppingBag,
   Loader2,
   AlertCircle,
-  CheckCircle2
+  CheckCircle2,
+  Clock
 } from 'lucide-react';
 import axiosInstance from '../../../../../SERVICES/axiosInstance';
 
@@ -32,6 +33,13 @@ const DeliveryTab = () => {
   const [shipmozoReady, setShipmozoReady] = useState(false);
   const [missing, setMissing] = useState([]);
 
+  const [sameDayEnabled, setSameDayEnabled] = useState(false);
+  const [sameDayPincodesText, setSameDayPincodesText] = useState('');
+  const [sameDayCutoffHour, setSameDayCutoffHour] = useState(14);
+  const [sameDayWarehouseLat, setSameDayWarehouseLat] = useState('');
+  const [sameDayWarehouseLng, setSameDayWarehouseLng] = useState('');
+  const [sameDayReady, setSameDayReady] = useState(false);
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
@@ -52,6 +60,23 @@ const DeliveryTab = () => {
       setKeysConfigured(Boolean(d.shipmozo?.keysConfigured));
       setShipmozoReady(Boolean(d.shipmozo?.ready));
       setMissing(Array.isArray(d.shipmozo?.missing) ? d.shipmozo.missing : []);
+      const sd = d.sameDay || {};
+      setSameDayEnabled(Boolean(sd.enabled));
+      setSameDayPincodesText(Array.isArray(sd.pincodes) ? sd.pincodes.join(', ') : '');
+      setSameDayCutoffHour(
+        Number.isFinite(Number(sd.cutoffHour)) ? Number(sd.cutoffHour) : 14
+      );
+      setSameDayWarehouseLat(
+        sd.warehouseLat != null && Number.isFinite(Number(sd.warehouseLat))
+          ? String(sd.warehouseLat)
+          : ''
+      );
+      setSameDayWarehouseLng(
+        sd.warehouseLng != null && Number.isFinite(Number(sd.warehouseLng))
+          ? String(sd.warehouseLng)
+          : ''
+      );
+      setSameDayReady(Boolean(sd.ready));
     } catch (e) {
       setFetchError(
         e.response?.data?.message || e.message || 'Could not load shipping settings'
@@ -110,6 +135,37 @@ const DeliveryTab = () => {
       });
     } finally {
       setTesting(false);
+    }
+  };
+
+  const handleSaveSameDay = async () => {
+    setSaving(true);
+    setSaveError(null);
+    setSaveOk(false);
+    try {
+      const res = await axiosInstance.put('/shipping-provider/admin/settings', {
+        sameDay: {
+          enabled: sameDayEnabled,
+          pincodes: sameDayPincodesText,
+          cutoffHour: Number(sameDayCutoffHour),
+          warehouseLat: sameDayWarehouseLat.trim() === '' ? null : Number(sameDayWarehouseLat),
+          warehouseLng: sameDayWarehouseLng.trim() === '' ? null : Number(sameDayWarehouseLng)
+        }
+      });
+      if (!res.data?.success) {
+        throw new Error(res.data?.message || 'Update failed');
+      }
+      setSaveOk(true);
+      await loadSettings();
+    } catch (e) {
+      const msg =
+        e.response?.data?.message ||
+        (Array.isArray(e.response?.data?.errors) && e.response.data.errors.join(' ')) ||
+        e.message ||
+        'Could not save Same Day settings';
+      setSaveError(msg);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -177,6 +233,17 @@ const DeliveryTab = () => {
           kind: 'shipping-partners'
         },
         {
+          id: 'same-day-delivery',
+          title: 'Same Day Delivery (Shiprocket Quick)',
+          description: sameDayEnabled
+            ? sameDayReady
+              ? `On · ${sameDayPincodesText.split(/[,;\s]+/).filter(Boolean).length} pincode(s) · cutoff ${sameDayCutoffHour}:00`
+              : 'On — add pincodes to start offering Same Day'
+            : 'Off — enable for selected near-warehouse pincodes (does not change Shipmozo/Shiprocket standard)',
+          icon: <Clock size={20} className="text-amber-500" />,
+          kind: 'same-day'
+        },
+        {
           id: 'pickup-address',
           title: 'Pickup addresses',
           description: 'Set up & manage your pickup addresses',
@@ -207,7 +274,11 @@ const DeliveryTab = () => {
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => setActiveModal(item)}
+                  onClick={() => {
+                    setSaveError(null);
+                    setSaveOk(false);
+                    setActiveModal(item);
+                  }}
                   className="w-full flex items-center cursor-pointer justify-between px-6 py-5 hover:bg-gray-50 transition-colors text-left group"
                 >
                   <div className="flex items-center gap-4">
@@ -245,7 +316,141 @@ const DeliveryTab = () => {
             </div>
 
             <div className="p-6 overflow-y-auto">
-              {activeModal.kind === 'shipping-partners' ? (
+              {activeModal.kind === 'same-day' ? (
+                <div className="space-y-5">
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    Same Day uses <strong>Shiprocket Quick</strong> only when the customer chooses it.
+                    Standard delivery still uses your active partner (Shipmozo / Shiprocket). Orders
+                    never book on both.
+                  </p>
+
+                  {loading ? (
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <Loader2 className="animate-spin" size={16} /> Loading…
+                    </div>
+                  ) : fetchError ? (
+                    <div className="flex items-start gap-2 text-sm text-red-600 bg-red-50 p-3 rounded-lg">
+                      <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                      <span>{fetchError}</span>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center justify-between gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50">
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">Enable Same Day Delivery</p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            Checkout shows the option only for listed pincodes before cutoff.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={sameDayEnabled}
+                          onClick={() => setSameDayEnabled((v) => !v)}
+                          className={`relative w-12 h-7 rounded-full transition-colors ${
+                            sameDayEnabled ? 'bg-amber-500' : 'bg-gray-300'
+                          }`}
+                        >
+                          <span
+                            className={`absolute top-0.5 left-0.5 w-6 h-6 rounded-full bg-white shadow transition-transform ${
+                              sameDayEnabled ? 'translate-x-5' : 'translate-x-0'
+                            }`}
+                          />
+                        </button>
+                      </div>
+
+                      <div>
+                        <label className="text-xs uppercase tracking-wider text-gray-400">
+                          Eligible pincodes
+                        </label>
+                        <textarea
+                          rows={4}
+                          value={sameDayPincodesText}
+                          onChange={(e) => setSameDayPincodesText(e.target.value)}
+                          placeholder="421004, 421001, 421002"
+                          className="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500 resize-y"
+                        />
+                        <p className="text-[11px] text-gray-400 mt-1">
+                          Comma or space separated 6-digit pins near the warehouse. Required when
+                          enabling.
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <label className="text-xs text-gray-400">Cutoff hour (local)</label>
+                          <input
+                            type="number"
+                            min={0}
+                            max={23}
+                            value={sameDayCutoffHour}
+                            onChange={(e) => setSameDayCutoffHour(e.target.value)}
+                            className="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500"
+                          />
+                          <p className="text-[11px] text-gray-400 mt-1">e.g. 14 = before 2 PM</p>
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-400">Warehouse lat</label>
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            value={sameDayWarehouseLat}
+                            onChange={(e) => setSameDayWarehouseLat(e.target.value)}
+                            placeholder="19.2183"
+                            className="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-400">Warehouse lng</label>
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            value={sameDayWarehouseLng}
+                            onChange={(e) => setSameDayWarehouseLng(e.target.value)}
+                            placeholder="73.0860"
+                            className="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500"
+                          />
+                        </div>
+                      </div>
+
+                      <div
+                        className={`flex items-start gap-2 text-xs p-2.5 rounded-lg ${
+                          sameDayReady
+                            ? 'bg-emerald-50 text-emerald-800'
+                            : 'bg-amber-50 text-amber-900'
+                        }`}
+                      >
+                        {sameDayReady ? (
+                          <CheckCircle2 size={14} className="mt-0.5 shrink-0" />
+                        ) : (
+                          <AlertCircle size={14} className="mt-0.5 shrink-0" />
+                        )}
+                        <span>
+                          {sameDayReady
+                            ? 'Ready — eligible checkouts can offer Same Day (after Shiprocket Quick is active on panel).'
+                            : 'Turn on and add pincodes to go live. Standard Shipmozo/Shiprocket delivery is unchanged.'}
+                        </span>
+                      </div>
+
+                      {saveError && (
+                        <div className="flex items-start gap-2 text-sm text-red-600 bg-red-50 p-3 rounded-lg">
+                          <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                          <span>{saveError}</span>
+                        </div>
+                      )}
+                      {saveOk && (
+                        <div className="flex items-start gap-2 text-sm text-emerald-700 bg-emerald-50 p-3 rounded-lg">
+                          <CheckCircle2 size={16} className="mt-0.5 shrink-0" />
+                          <span>
+                            Saved. Same Day is {sameDayEnabled ? 'enabled' : 'disabled'} for this
+                            storefront.
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              ) : activeModal.kind === 'shipping-partners' ? (
                 <div className="space-y-5">
                   <p className="text-sm text-gray-600 leading-relaxed">
                     Active partner is used for <strong>checkout rates and new orders only</strong>.
@@ -430,6 +635,15 @@ const DeliveryTab = () => {
                   className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-xl shadow-md disabled:opacity-50"
                 >
                   {saving ? 'Saving…' : 'Save Changes'}
+                </button>
+              ) : activeModal.kind === 'same-day' ? (
+                <button
+                  type="button"
+                  disabled={saving || loading}
+                  onClick={handleSaveSameDay}
+                  className="px-6 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm rounded-xl shadow-md disabled:opacity-50"
+                >
+                  {saving ? 'Saving…' : 'Save Same Day'}
                 </button>
               ) : (
                 <button

@@ -17,6 +17,7 @@ import {
   confirmCheckoutQuote,
   placeOrder,
   setSelectedAddress,
+  setShippingSpeed,
   setPaymentMethod,
   setPaymentPlan,
   setBalanceCollection,
@@ -29,6 +30,7 @@ import {
   selectQuoteId,
   selectPlacedOrder,
   selectSelectedAddressId,
+  selectShippingSpeed,
   selectPaymentMethod,
   selectPaymentPlan,
   selectBalanceCollection,
@@ -850,6 +852,7 @@ const Checkout = () => {
   const quoteId = useSelector(selectQuoteId);
   const placedOrder = useSelector(selectPlacedOrder);
   const selectedAddressId = useSelector(selectSelectedAddressId);
+  const shippingSpeed = useSelector(selectShippingSpeed);
   const paymentMethod = useSelector(selectPaymentMethod);
   const paymentPlan = useSelector(selectPaymentPlan);
   const balanceCollection = useSelector(selectBalanceCollection);
@@ -1166,6 +1169,7 @@ const Checkout = () => {
           paymentMethodHint: paymentHint,
           paymentPlan: plan,
           balanceCollection: balance,
+          shippingSpeed,
           forceRefresh,
         })
       );
@@ -1184,6 +1188,7 @@ const Checkout = () => {
       paymentMethod,
       paymentPlan,
       balanceCollection,
+      shippingSpeed,
       loading.quote,
     ]
   );
@@ -1201,6 +1206,26 @@ const Checkout = () => {
       setOnlineFullDisplayAmount(quote.amountPayable);
     }
   }, [quote, loading.quote, paymentMethod, paymentPlan, balanceCollection]);
+
+  // Re-quote when customer switches Same Day ↔ Standard (setShippingSpeed clears quote).
+  useEffect(() => {
+    if (!selectedAddressId || loading.quote) return;
+    if (step !== 2 && step !== 3) return;
+    if (quoteId) return;
+    requestQuote(
+      quoteParamsForPaymentSelection({ paymentMethod, paymentPlan, balanceCollection })
+    );
+  }, [
+    shippingSpeed,
+    selectedAddressId,
+    step,
+    quoteId,
+    loading.quote,
+    requestQuote,
+    paymentMethod,
+    paymentPlan,
+    balanceCollection,
+  ]);
 
   useEffect(() => {
     if (step !== 3 || !checkoutPolicy) return;
@@ -2027,6 +2052,109 @@ const Checkout = () => {
                     </p>
                   </div>
                 </div>
+
+                {quote?.sameDayOption?.available ? (
+                  <div className="mt-3 space-y-2">
+                    <p
+                      className="font-black uppercase"
+                      style={{ fontSize: 10, color: "#9ca3af", letterSpacing: "0.06em" }}
+                    >
+                      Delivery option
+                    </p>
+                    <div className="grid grid-cols-1 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (shippingSpeed !== "same_day") {
+                            dispatch(setShippingSpeed("same_day"));
+                          }
+                        }}
+                        className="w-full text-left cursor-pointer transition-all"
+                        style={{
+                          padding: 12,
+                          borderRadius: 14,
+                          border: `2px solid ${shippingSpeed === "same_day" ? "#111" : "#f0e8d8"}`,
+                          background: shippingSpeed === "same_day" ? "#111" : "#fff",
+                          color: shippingSpeed === "same_day" ? "#F7A221" : "#111",
+                        }}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Clock size={14} />
+                            <div className="min-w-0">
+                              <p className="font-black text-xs">Same Day Delivery</p>
+                              <p
+                                className="truncate"
+                                style={{
+                                  fontSize: 10,
+                                  opacity: 0.75,
+                                  marginTop: 2,
+                                  color: shippingSpeed === "same_day" ? "#F7A221" : "#9ca3af",
+                                }}
+                              >
+                                {quote.sameDayOption.etaLabel || "Delivered today"}
+                                {quote.sameDayOption.cutoffHour != null
+                                  ? ` · order before ${quote.sameDayOption.cutoffHour}:00`
+                                  : ""}
+                              </p>
+                            </div>
+                          </div>
+                          <span className="font-black text-xs flex-shrink-0">
+                            {Number(quote.sameDayOption.deliveryCharges) === 0
+                              ? "FREE"
+                              : `₹${Number(quote.sameDayOption.deliveryCharges || 0)}`}
+                          </span>
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (shippingSpeed !== "standard") {
+                            dispatch(setShippingSpeed("standard"));
+                          }
+                        }}
+                        className="w-full text-left cursor-pointer transition-all"
+                        style={{
+                          padding: 12,
+                          borderRadius: 14,
+                          border: `2px solid ${shippingSpeed === "standard" ? "#111" : "#f0e8d8"}`,
+                          background: shippingSpeed === "standard" ? "#111" : "#fff",
+                          color: shippingSpeed === "standard" ? "#F7A221" : "#111",
+                        }}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Truck size={14} />
+                            <div className="min-w-0">
+                              <p className="font-black text-xs">Standard Delivery</p>
+                              <p
+                                className="truncate"
+                                style={{
+                                  fontSize: 10,
+                                  opacity: 0.75,
+                                  marginTop: 2,
+                                  color: shippingSpeed === "standard" ? "#F7A221" : "#9ca3af",
+                                }}
+                              >
+                                {quote.deliveryEstimate ||
+                                  (quote.courierName
+                                    ? `Via ${quote.courierName}`
+                                    : "Regular delivery")}
+                              </p>
+                            </div>
+                          </div>
+                          <span className="font-black text-xs flex-shrink-0">
+                            {shippingSpeed === "standard"
+                              ? Number(quote.deliveryCharges) === 0
+                                ? "FREE"
+                                : `₹${Number(quote.deliveryCharges || 0)}`
+                              : "See quote"}
+                          </span>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             )}
 

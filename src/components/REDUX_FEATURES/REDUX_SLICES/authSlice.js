@@ -132,7 +132,11 @@ export const logoutUser = createAsyncThunk(
   "auth/logout",
   async (_, { rejectWithValue }) => {
     try {
-      await axiosInstance.post("/auth/logout", { portal: "ecomm" });
+      await axiosInstance.post(
+        "/auth/logout",
+        { portal: "ecomm" },
+        { authContext: AUTH_CONTEXT_USER }
+      );
       localStorage.removeItem(USER_ACCESS_TOKEN_KEY);
       clearAccessTokenSchedule(AUTH_CONTEXT_USER);
       return true;
@@ -246,7 +250,34 @@ export const fetchMe = createAsyncThunk(
   "auth/me",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.get("/auth/me");
+      const res = await axiosInstance.get("/auth/me", {
+        authContext: AUTH_CONTEXT_USER,
+        headers: { "x-auth-portal": "ecomm" },
+      });
+      const role = String(res.data?.user?.role || "")
+        .trim()
+        .toLowerCase();
+      const userType = String(res.data?.user?.userType || "")
+        .trim()
+        .toLowerCase();
+      const privilegedRoles = new Set([
+        "admin",
+        "product_manager",
+        "order_manager",
+        "marketing_manager",
+        "inventory_manager",
+        "packing_viewer",
+      ]);
+      // Defense-in-depth: privileged accounts must never populate storefront auth.
+      if (privilegedRoles.has(role) || userType === "admin") {
+        localStorage.removeItem(USER_ACCESS_TOKEN_KEY);
+        clearAccessTokenSchedule(AUTH_CONTEXT_USER);
+        return rejectWithValue({
+          success: false,
+          code: "PORTAL_ACCESS_DENIED",
+          message: "This account is not allowed on the customer storefront.",
+        });
+      }
       return res.data;
     } catch (err) {
       return rejectWithValue(
@@ -256,12 +287,16 @@ export const fetchMe = createAsyncThunk(
   }
 );
 
-// ✅ REFRESH TOKEN — unchanged
+// ✅ REFRESH TOKEN — always customer context (never inherit admin JWT)
 export const refreshToken = createAsyncThunk(
   "auth/refresh",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.post("/auth/refresh", { portal: "ecomm" });
+      const res = await axiosInstance.post(
+        "/auth/refresh",
+        { portal: "ecomm" },
+        { authContext: AUTH_CONTEXT_USER }
+      );
       if (res.data.accessToken) {
         localStorage.setItem(USER_ACCESS_TOKEN_KEY, res.data.accessToken);
         notifyAccessTokenStored(AUTH_CONTEXT_USER);

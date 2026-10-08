@@ -42,6 +42,7 @@ export const fetchCheckoutQuote = createAsyncThunk(
       paymentPlan = "full",
       balanceCollection = "online",
       demoMockShipping = false,
+      shippingSpeed = "standard",
     },
     { rejectWithValue }
   ) => {
@@ -53,6 +54,10 @@ export const fetchCheckoutQuote = createAsyncThunk(
         demoMockShipping,
         paymentPlan,
         balanceCollection,
+        shippingSpeed:
+          String(shippingSpeed || "standard").toLowerCase() === "same_day"
+            ? "same_day"
+            : "standard",
       };
       const res = await axiosInstance.post("/checkout/quote", body);
       if (!res.data.success) throw new Error(res.data.message || "Failed to get quote");
@@ -380,6 +385,9 @@ const initialState = {
   // Selected address for checkout
   selectedAddressId: null,
 
+  /** standard | same_day — customer choice after address (default standard) */
+  shippingSpeed: "standard",
+
   // Payment method and plan
   paymentMethod: null,
   paymentPlan: "full", // "full" or "advance"
@@ -428,6 +436,22 @@ const checkoutSlice = createSlice({
   reducers: {
     setSelectedAddress: (state, action) => {
       state.selectedAddressId = action.payload;
+      state.shippingSpeed = "standard";
+      state.quote = null;
+      state.quoteId = null;
+      state.quoteExpiresAt = null;
+      state.confirmed = null;
+      state.error.quote = null;
+      state.error.confirm = null;
+    },
+    setShippingSpeed: (state, action) => {
+      const next =
+        String(action.payload || "standard").toLowerCase() === "same_day"
+          ? "same_day"
+          : "standard";
+      if (state.shippingSpeed === next) return;
+      state.shippingSpeed = next;
+      // Force re-quote with the selected speed's charges.
       state.quote = null;
       state.quoteId = null;
       state.quoteExpiresAt = null;
@@ -704,6 +728,7 @@ const checkoutSlice = createSlice({
 
 export const {
   setSelectedAddress,
+  setShippingSpeed,
   setPaymentMethod,
   setPaymentPlan,
   setBalanceCollection,
@@ -726,6 +751,7 @@ export const selectQuoteId = (s) => s.checkout.quoteId;
 export const selectConfirmed = (s) => s.checkout.confirmed;
 export const selectPlacedOrder = (s) => s.checkout.placedOrder;
 export const selectSelectedAddressId = (s) => s.checkout.selectedAddressId;
+export const selectShippingSpeed = (s) => s.checkout.shippingSpeed || "standard";
 export const selectPaymentMethod = (s) => s.checkout.paymentMethod;
 export const selectPaymentPlan = (s) => s.checkout.paymentPlan;
 export const selectBalanceCollection = (s) => s.checkout.balanceCollection;

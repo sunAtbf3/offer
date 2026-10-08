@@ -3,6 +3,13 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import {
+  ExternalLink,
+  FileText,
+  MapPin,
+  Store,
+  X,
+} from 'lucide-react';
+import {
   listDropshipperRequests,
   approveDropshipperRequest,
   rejectDropshipperRequest,
@@ -10,6 +17,33 @@ import {
 import { selectAdminUser } from '../../ADMIN_REDUX_MANAGEMENT/adminAuthSlice';
 import { ROLES } from '../../roles';
 import { StatusPill, formatInr, formatDate } from './statusBadges.jsx';
+
+function Field({ label, children, className = '' }) {
+  return (
+    <div className={className}>
+      <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400 mb-0.5">
+        {label}
+      </p>
+      <div className="text-sm text-gray-900 break-words">{children ?? '—'}</div>
+    </div>
+  );
+}
+
+function ProofLink({ href, label }) {
+  if (!href) return null;
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-teal-200 bg-teal-50 text-teal-800 text-sm font-medium hover:bg-teal-100 hover:border-teal-300 transition-colors"
+    >
+      <FileText size={14} />
+      {label}
+      <ExternalLink size={12} className="opacity-70" />
+    </a>
+  );
+}
 
 const ADMIN_STATUS_OPTIONS = [
   { value: 'all', label: 'All admin status' },
@@ -257,169 +291,164 @@ const RequestsTab = () => {
       )}
 
       {selected && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => !acting && setSelected(null)} />
-          <div className="relative bg-white rounded-xl shadow-xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-start justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Request review</h3>
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div
+            className="absolute inset-0 bg-black/45 backdrop-blur-[1px]"
+            onClick={() => !acting && setSelected(null)}
+          />
+          <div className="relative bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden">
+            {/* Header */}
+            <div className="shrink-0 flex items-start justify-between gap-3 px-5 py-4 border-b border-gray-100 bg-white">
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-teal-700 mb-1">
+                  Request review
+                </p>
+                <h3 className="text-lg font-semibold text-gray-900 truncate">
+                  {selected.fullName || 'Applicant'}
+                </h3>
+                <div className="flex flex-wrap items-center gap-2 mt-2">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 text-xs font-medium capitalize">
+                    {selected.kind || 'registration'}
+                  </span>
+                  <StatusPill status={selected.payment?.status} kind="payment" />
+                  <StatusPill status={selected.adminStatus} kind="request" />
+                </div>
+              </div>
               <button
                 type="button"
                 disabled={acting}
                 onClick={() => setSelected(null)}
-                className="text-gray-400 hover:text-gray-600"
+                className="shrink-0 p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+                aria-label="Close"
               >
-                ✕
+                <X size={18} />
               </button>
             </div>
 
-            <div className="space-y-3 text-sm mb-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <p className="text-xs text-gray-500">Name</p>
-                  <p className="font-medium">{selected.fullName}</p>
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+              {/* Applicant + payment */}
+              <section className="rounded-xl border border-gray-200 bg-gray-50/60 p-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+                  <Field label="Email">{selected.email || '—'}</Field>
+                  <Field label="Phone">{selected.phone || '—'}</Field>
+                  <Field label="WhatsApp">{selected.whatsappNumber || '—'}</Field>
+                  <Field label="Plan">{selected.planYears || 1} year</Field>
+                  <Field label="Amount due">{formatInr(selected.amountDueInr)}</Field>
+                  <Field label="Amount paid">{formatInr(selected.amountPaidInr)}</Field>
+                  <Field label="Submitted">{formatDate(selected.createdAt)}</Field>
+                  {selected.payment?.razorpayPaymentId ? (
+                    <Field label="Payment ID">
+                      <span className="font-mono text-xs text-gray-700">
+                        {selected.payment.razorpayPaymentId}
+                      </span>
+                    </Field>
+                  ) : null}
                 </div>
-                <div>
-                  <p className="text-xs text-gray-500">Kind</p>
-                  <p className="capitalize">{selected.kind}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">Email</p>
-                  <p>{selected.email}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">Phone</p>
-                  <p>{selected.phone}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">Due / Paid</p>
-                  <p>
-                    {formatInr(selected.amountDueInr)} / {formatInr(selected.amountPaidInr)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">Plan</p>
-                  <p>{selected.planYears || 1} year</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">Payment</p>
-                  <StatusPill status={selected.payment?.status} kind="payment" />
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">Admin</p>
-                  <StatusPill status={selected.adminStatus} kind="request" />
-                </div>
-              </div>
-              {selected.payment?.razorpayPaymentId ? (
-                <p className="text-xs text-gray-500 break-all">
-                  Payment ID: {selected.payment.razorpayPaymentId}
-                </p>
-              ) : null}
+              </section>
 
               {selected.application ? (
-                <div className="border-t border-gray-100 pt-3 space-y-2">
-                  <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                    Application (wholesaler-style)
-                  </p>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div>
-                      <p className="text-gray-500">WhatsApp</p>
-                      <p>{selected.whatsappNumber || '—'}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Have shop</p>
-                      <p>{selected.application.haveShop ? 'Yes' : 'No'}</p>
-                    </div>
-                    <div className="col-span-2">
-                      <p className="text-gray-500">Permanent address</p>
-                      <p>{selected.application.permanentAddress || '—'}</p>
-                    </div>
-                    <div className="col-span-2">
-                      <p className="text-gray-500">Business address</p>
-                      <p>{selected.application.businessAddress || '—'}</p>
-                    </div>
-                    <div className="col-span-2">
-                      <p className="text-gray-500">Delivery address</p>
-                      <p>{selected.application.deliveryAddress || '—'}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Selling from</p>
-                      <p>{selected.application.sellingPlaceFrom || '—'}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Zone / city</p>
-                      <p>{selected.application.sellingZoneCity || '—'}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Category</p>
-                      <p>{selected.application.productCategory || '—'}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Monthly est.</p>
-                      <p>
-                        {selected.application.monthlyEstimatedPurchase != null
-                          ? formatInr(selected.application.monthlyEstimatedPurchase)
-                          : '—'}
-                      </p>
-                    </div>
-                    {selected.application.idProofUrl ? (
-                      <div className="col-span-2">
-                        <a
-                          href={selected.application.idProofUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-teal-700 underline break-all"
-                        >
-                          ID proof →
-                        </a>
-                      </div>
-                    ) : null}
-                    {selected.application.businessAddressProofUrl ? (
-                      <div className="col-span-2">
-                        <a
-                          href={selected.application.businessAddressProofUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-teal-700 underline break-all"
-                        >
-                          Business address proof →
-                        </a>
-                      </div>
-                    ) : null}
+                <section className="rounded-xl border border-gray-200 p-4 space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Store size={15} className="text-teal-600" />
+                    <h4 className="text-sm font-semibold text-gray-900">Business details</h4>
                   </div>
-                </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+                    <Field label="Have shop">
+                      {selected.application.haveShop ? 'Yes' : 'No'}
+                    </Field>
+                    <Field label="Category">
+                      {selected.application.productCategory || '—'}
+                    </Field>
+                    <Field label="Selling from">
+                      {selected.application.sellingPlaceFrom || '—'}
+                    </Field>
+                    <Field label="Zone / city">
+                      {selected.application.sellingZoneCity || '—'}
+                    </Field>
+                    <Field label="Monthly estimate" className="sm:col-span-2">
+                      {selected.application.monthlyEstimatedPurchase != null
+                        ? formatInr(selected.application.monthlyEstimatedPurchase)
+                        : '—'}
+                    </Field>
+                  </div>
+
+                  <div className="border-t border-gray-100 pt-3 space-y-3">
+                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                      <MapPin size={12} />
+                      Addresses
+                    </div>
+                    <Field label="Permanent">{selected.application.permanentAddress || '—'}</Field>
+                    <Field label="Business">{selected.application.businessAddress || '—'}</Field>
+                    <Field label="Delivery">{selected.application.deliveryAddress || '—'}</Field>
+                  </div>
+
+                  {(selected.application.idProofUrl ||
+                    selected.application.businessAddressProofUrl) && (
+                    <div className="border-t border-gray-100 pt-3">
+                      <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400 mb-2">
+                        Documents
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <ProofLink
+                          href={selected.application.idProofUrl}
+                          label="ID proof"
+                        />
+                        <ProofLink
+                          href={selected.application.businessAddressProofUrl}
+                          label="Business address proof"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </section>
               ) : null}
 
               {selected.kind === 'renewal' ? (
-                <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-blue-800 text-xs">
-                  Renewals auto-approve on payment. Manual approve is only for registration
-                  requests that are paid + pending.
+                <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+                  Renewals auto-approve after payment. Manual approve is only for paid
+                  registration requests that are still pending.
                 </div>
               ) : null}
+
               {selected.decisionNote ? (
-                <div className="bg-gray-50 border border-gray-100 rounded-lg p-3 text-gray-700">
-                  Decision note: {selected.decisionNote}
+                <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
+                  <span className="font-medium text-gray-900">Decision note: </span>
+                  {selected.decisionNote}
                 </div>
+              ) : null}
+
+              {!canDecide ? (
+                <p className="text-sm text-amber-800 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
+                  Only Super Admin can approve or reject. You can view this request.
+                </p>
               ) : null}
             </div>
 
-            {canDecide && selected.adminStatus === 'pending' && selected.kind === 'registration' ? (
-              <div className="space-y-3">
-                <label className="block text-sm">
-                  <span className="text-xs text-gray-500">Note (required for reject)</span>
+            {/* Sticky footer actions */}
+            {canDecide &&
+            selected.adminStatus === 'pending' &&
+            selected.kind === 'registration' ? (
+              <div className="shrink-0 border-t border-gray-100 bg-white px-5 py-4 space-y-3">
+                <label className="block">
+                  <span className="text-xs font-medium text-gray-500">
+                    Note <span className="text-gray-400">(required for reject)</span>
+                  </span>
                   <textarea
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
-                    rows={3}
-                    className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
-                    placeholder="Optional for approve; required for reject"
+                    rows={2}
+                    className="mt-1.5 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400"
+                    placeholder="Optional for approve · required for reject"
                   />
                 </label>
-                <div className="flex gap-2 justify-end">
+                <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
                   <button
                     type="button"
                     disabled={acting}
                     onClick={handleReject}
-                    className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 disabled:opacity-50"
+                    className="px-4 py-2.5 bg-white border border-red-200 text-red-700 text-sm font-semibold rounded-lg hover:bg-red-50 disabled:opacity-50"
                   >
                     Reject
                   </button>
@@ -432,17 +461,24 @@ const RequestsTab = () => {
                         ? 'Payment must be paid before approve'
                         : undefined
                     }
-                    className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50"
+                    className="px-5 py-2.5 bg-teal-600 text-white text-sm font-semibold rounded-lg hover:bg-teal-700 disabled:opacity-50"
                   >
                     Approve
                   </button>
                 </div>
               </div>
-            ) : !canDecide ? (
-              <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg p-3">
-                Only Super Admin can approve or reject. You can view requests.
-              </p>
-            ) : null}
+            ) : (
+              <div className="shrink-0 border-t border-gray-100 bg-white px-5 py-3 flex justify-end">
+                <button
+                  type="button"
+                  disabled={acting}
+                  onClick={() => setSelected(null)}
+                  className="px-4 py-2 border border-gray-200 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50"
+                >
+                  Close
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
