@@ -22,6 +22,8 @@ import navLogo from "../../assets/nav-logo.jpg";
 import arrivals from "../../assets/nav-arrived.svg";
 import SaleIcon from "../../assets/nav-sale.svg";
 import deal from "../../assets/nav-deal.svg";
+import bulkIcon from "../../assets/nav-bulk.svg";
+import giftIcon from "../../assets/nav-gift.svg";
 import WishlistSidebar from './WishlistSidebar';
 import { selectDefaultAddress, fetchAddresses } from '../REDUX_FEATURES/REDUX_SLICES/Useraddressslice';
 import { USER_ACCESS_TOKEN_KEY } from '../../SERVICES/axiosInstance';
@@ -621,6 +623,16 @@ const Navbar = ({ searchQuery, setSearchQuery, isMenuOpen, setIsMenuOpen, isLogg
       path: "/on-sale#tagProducts-top",
       icon: <ImageIcon src={SaleIcon} alt="Festival Sale is Live" animation="animate-flicker" />,
     },
+    {
+      label: "Bulk",
+      path: "/bulk",
+      icon: <ImageIcon src={bulkIcon} alt="Bulk" animation="animate-bounce-soft" />,
+    },
+    {
+      label: "Customize Gift",
+      path: "/customize-gift",
+      icon: <ImageIcon src={giftIcon} alt="Customize Gift" animation="animate-float" />,
+    },
   ];
 
   return (
@@ -891,23 +903,23 @@ const Navbar = ({ searchQuery, setSearchQuery, isMenuOpen, setIsMenuOpen, isLogg
               </div>
 
               {/* Center Zone: Deal/Arrived/Sale — same size, one line, jewellery stays on-page */}
-              <div className="flex-1 flex items-center justify-start gap-0 lg:gap-0.5 xl:gap-2 min-w-0">
+              <div className="flex-1 flex items-center justify-start gap-0 lg:gap-0.5 xl:gap-1.5 2xl:gap-2 min-w-0">
                 {bottomNavLinks.map((link, idx) => (
                   <Link
                     key={idx}
                     to={link.path}
-                    className="shrink-0 text-center justify-center flex items-center px-0.5 lg:px-1 xl:px-2 py-2 lg:py-2.5 gap-1 lg:gap-1.5 xl:gap-2 hover:bg-gray-50 rounded-xl transition-all duration-200 group whitespace-nowrap"
+                    className="shrink-0 text-center justify-center flex items-center px-0.5 lg:px-1 xl:px-1.5 2xl:px-2 py-1.5 lg:py-2 gap-1 lg:gap-1 xl:gap-1.5 hover:bg-gray-50 rounded-xl transition-all duration-200 group whitespace-nowrap"
                   >
                     <div
                       className={
                         link.label === "Just Arrived"
                           ? "transition-transform duration-300 group-hover:scale-125 shrink-0 [&_img]:!w-10 [&_img]:!h-10 lg:[&_img]:!w-[44px] lg:[&_img]:!h-[44px] xl:[&_img]:!w-14 xl:[&_img]:!h-14"
-                          : "transition-transform duration-300 group-hover:scale-125 shrink-0"
+                          : "transition-transform duration-300 group-hover:scale-125 shrink-0 [&_img]:w-8 [&_img]:h-8 lg:[&_img]:w-9 lg:[&_img]:h-9 xl:[&_img]:w-10 xl:[&_img]:h-10"
                       }
                     >
                       {link.icon}
                     </div>
-                    <span className="font-bold text-black text-[11px] lg:text-xs xl:text-[0.85rem] relative z-10 whitespace-nowrap">
+                    <span className="font-bold text-black text-[10.5px] lg:text-[11px] xl:text-xs 2xl:text-[0.85rem] relative z-10 whitespace-nowrap">
                       {link.label}
                     </span>
                   </Link>

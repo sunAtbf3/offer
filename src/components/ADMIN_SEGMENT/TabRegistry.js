@@ -23,6 +23,8 @@ const SettingsDashboard = lazy(() => import("./ADMIN_TABS/SETTINGS/SettingsDashb
 const ReviewsDashboard = lazy(() => import("./ADMIN_TABS/CUSTOMER_REVIEW/ReviewsDashboard"));
 const StaffTab = lazy(() => import("./ADMIN_TABS/STAFF_TAB/StaffTab"));
 const DemoDashboard = lazy(() => import("./ADMIN_TABS/DEMO/DemoDashboard"));
+const GiftCustomizationTab = lazy(() => import("./ADMIN_TABS/GiftEnquiriesTab/GiftCustomizationTab"));
+const BulkInquiriesTab = lazy(() => import("./ADMIN_TABS/GiftEnquiriesTab/BulkInquiriesTab"));
 // const WholesalerDashboard = lazy(() => import("./ADMIN_TABS/WHOLESALER_TAB/WholesalerDashboard"));
 
 // const getProductsBadge = (state) => state.adminGetProducts?.products?.length || 0;
@@ -78,7 +80,20 @@ export const TAB_REGISTRY = [
     component: outOfStockTab,
     badge: null,
   },
-
+  {
+    id: "gift_customization",
+    label: "Gift Customization",
+    icon: "M20 12v10H4V12M2 7h20v5H2zM12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zm0 0h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z",
+    component: GiftCustomizationTab,
+    badge: null,
+  },
+  {
+    id: "bulk_inquiries",
+    label: "Bulk Inquiries",
+    icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4",
+    component: BulkInquiriesTab,
+    badge: null,
+  },
   {
     id: "customers",
     label: "Leads",
