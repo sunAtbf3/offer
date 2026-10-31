@@ -10,7 +10,7 @@ import { selectDisplayCartCount } from '../REDUX_FEATURES/REDUX_SLICES/userCartS
 import CartSidebar from './CartSidebar';
 import {
   Search, User, Heart, ShoppingCart, Menu, X, Mail, Clock, Bell,
-  ChevronRight, Home, Flame, Package, Tag, Ticket, HeadphonesIcon,
+  ChevronRight, ChevronDown, LayoutGrid, Home, Flame, Package, Tag, Ticket, HeadphonesIcon,
   Smartphone, ChefHat, Shirt, Dumbbell, Plane, Book, Baby, Car, Box, Gift,
   MapPin, LogOut, UserCircle, Settings, Sparkles, Gem, TrendingUp, Star, Zap
 } from 'lucide-react';
@@ -463,6 +463,7 @@ const Navbar = ({ searchQuery, setSearchQuery, isMenuOpen, setIsMenuOpen, isLogg
   const navigate = useNavigate();
   const location = useLocation();
   const [isAccountDropdownOpen, setIsAccountDropdownOpen] = useState(false);
+  const [isMobileCategoriesOpen, setIsMobileCategoriesOpen] = useState(false);
   const accountTriggerMobileRef = useRef(null);
   const accountTriggerDesktopRef = useRef(null);
   const accountDropdownMobileRef = useRef(null);
@@ -1001,7 +1002,7 @@ const Navbar = ({ searchQuery, setSearchQuery, isMenuOpen, setIsMenuOpen, isLogg
                 {/* Quick links */}
                 <p className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] mb-2">✨ Quick Links</p>
 
-                {/* Home link in sidebar */}
+                {/* 1. Home */}
                 <Link
                   to="/"
                   onClick={() => {
@@ -1016,25 +1017,117 @@ const Navbar = ({ searchQuery, setSearchQuery, isMenuOpen, setIsMenuOpen, isLogg
                   <span className="group-hover:text-[#F7A221]">Home</span>
                 </Link>
 
-                {/* Remaining quick links */}
-                {bottomNavLinks.map((link, idx) => (
-                  <Link
-                    key={idx}
-                    to={link.path}
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center gap-4 p-3 hover:bg-orange-50 rounded-xl transition-all font-bold text-sm group"
+                {/* 2. Categories (Expandable Accordion) */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileCategoriesOpen((prev) => !prev)}
+                    className="w-full flex items-center justify-between p-3 hover:bg-orange-50 rounded-xl transition-all font-bold text-sm group cursor-pointer text-left"
                   >
-                    <span
-                      className={`p-2 bg-gray-50 rounded-lg group-hover:scale-110 transition-transform ${
-                        link.label === "Just Arrived" ? "[&_img]:!h-14 [&_img]:!w-14" : ""
-                      }`}
-                    >
-                      {link.icon}
-                    </span>
-                    <span className="group-hover:text-[#F7A221]">{link.label}</span>
-                  </Link>
-                ))}
+                    <div className="flex items-center gap-4">
+                      <span className="p-2 bg-gray-50 rounded-lg group-hover:scale-110 transition-transform w-[56px] h-[56px] flex items-center justify-center shrink-0">
+                        <LayoutGrid size={24} className="text-[#F7A221] animate-bounce-soft" />
+                      </span>
+                      <span className="group-hover:text-[#F7A221]">Categories</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-gray-500 font-bold bg-gray-100 px-2 py-0.5 rounded-full">
+                        {mobileCategories.length}
+                      </span>
+                      <ChevronDown
+                        size={16}
+                        className={`text-gray-400 transition-transform duration-200 ${
+                          isMobileCategoriesOpen ? "rotate-180 text-[#F7A221]" : ""
+                        }`}
+                      />
+                    </div>
+                  </button>
 
+                  {/* Category Pills inside Accordion */}
+                  {isMobileCategoriesOpen && (
+                    <div className="pl-6 pr-2 pt-1 pb-3 flex flex-wrap gap-1.5 animate-fadeIn">
+                      {mobileCategories.map((cat, i) => (
+                        <div
+                          key={i}
+                          onClick={() => {
+                            setIsMenuOpen(false);
+                            setTimeout(() => navigate(cat.path), 150);
+                          }}
+                          className="px-3 py-1.5 rounded-full border border-gray-200 bg-white text-[11px] font-semibold text-gray-700 hover:bg-[#F7A221] hover:text-white hover:border-[#F7A221] transition-all cursor-pointer whitespace-nowrap active:scale-[.95]"
+                        >
+                          {cat.label}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. Customized Gift */}
+                <Link
+                  to="/customize-gift"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex items-center gap-4 p-3 hover:bg-orange-50 rounded-xl transition-all font-bold text-sm group"
+                >
+                  <span className="p-2 bg-gray-50 rounded-lg group-hover:scale-110 transition-transform">
+                    <ImageIcon src={giftIcon} alt="Customized Gift" animation="animate-float" />
+                  </span>
+                  <span className="group-hover:text-[#F7A221]">Customized Gift</span>
+                </Link>
+
+                {/* 4. Today's Deal */}
+                <Link
+                  to="/today-arrival#tagProducts-top"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex items-center gap-4 p-3 hover:bg-orange-50 rounded-xl transition-all font-bold text-sm group"
+                >
+                  <span className="p-2 bg-gray-50 rounded-lg group-hover:scale-110 transition-transform">
+                    <ImageIcon src={deal} alt="Today's Deal" animation="animate-swing" />
+                  </span>
+                  <span className="group-hover:text-[#F7A221]">Today's Deal</span>
+                </Link>
+
+                {/* 5. Just Arrived */}
+                <Link
+                  to="/#best-sellers"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex items-center gap-4 p-3 hover:bg-orange-50 rounded-xl transition-all font-bold text-sm group"
+                >
+                  <span className="p-2 bg-gray-50 rounded-lg group-hover:scale-110 transition-transform [&_img]:!h-14 [&_img]:!w-14">
+                    <ImageIcon
+                      src={arrivals}
+                      alt="Just Arrived"
+                      animation="animate-float"
+                      className="object-center"
+                    />
+                  </span>
+                  <span className="group-hover:text-[#F7A221]">Just Arrived</span>
+                </Link>
+
+                {/* 6. Festive Sale */}
+                <Link
+                  to="/on-sale#tagProducts-top"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex items-center gap-4 p-3 hover:bg-orange-50 rounded-xl transition-all font-bold text-sm group"
+                >
+                  <span className="p-2 bg-gray-50 rounded-lg group-hover:scale-110 transition-transform">
+                    <ImageIcon src={SaleIcon} alt="Festive Sale" animation="animate-flicker" />
+                  </span>
+                  <span className="group-hover:text-[#F7A221]">Festive Sale</span>
+                </Link>
+
+                {/* 7. Bulk */}
+                <Link
+                  to="/bulk"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex items-center gap-4 p-3 hover:bg-orange-50 rounded-xl transition-all font-bold text-sm group"
+                >
+                  <span className="p-2 bg-gray-50 rounded-lg group-hover:scale-110 transition-transform">
+                    <ImageIcon src={bulkIcon} alt="Bulk" animation="animate-bounce-soft" />
+                  </span>
+                  <span className="group-hover:text-[#F7A221]">Bulk</span>
+                </Link>
+
+                {/* 8. Contact Us */}
                 <Link
                   to="/contact"
                   onClick={() => setIsMenuOpen(false)}
@@ -1045,22 +1138,6 @@ const Navbar = ({ searchQuery, setSearchQuery, isMenuOpen, setIsMenuOpen, isLogg
                   </span>
                   <span className="group-hover:text-[#F7A221]">Contact Us</span>
                 </Link>
-
-                {/* Categories — pill chips in sidebar */}
-                <div className="pt-4 border-t">
-                  <p className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] mb-4">🔥 Top Categories</p>
-                  <div className="flex flex-wrap gap-2">
-                    {mobileCategories.map((cat, i) => (
-                      <div
-                        key={i}
-                        onClick={() => { setIsMenuOpen(false); setTimeout(() => navigate(cat.path), 150); }}
-                        className="px-3 py-1.5 rounded-full border border-gray-200 bg-white text-[11px] font-semibold text-gray-700 hover:bg-[#F7A221] hover:text-white hover:border-[#F7A221] transition-all cursor-pointer whitespace-nowrap active:scale-[.95]"
-                      >
-                        {cat.label}
-                      </div>
-                    ))}
-                  </div>
-                </div>
 
                 {/* Contact / help block */}
                 <div className="pt-6">

@@ -410,10 +410,10 @@ export default function BulkOrderPage() {
                 /* ── FORM STATE ── */
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="border-b border-gray-100 pb-4 mb-6">
-                    <h2 className="text-2xl font-black text-gray-900">
+                    <h2 className="text-2xl font-medium text-gray-900">
                       Submit Your Bulk Inquiry
                     </h2>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-gray-500 mt-1 capitalize">
                       Fill out the wholesale procurement form below. Fields marked with{" "}
                       <span className="text-red-500 font-bold">*</span> are required.
                     </p>

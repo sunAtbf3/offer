@@ -485,11 +485,10 @@ export default function CustomizeGiftPage() {
                 /* ── FORM STATE ── */
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="border-b border-gray-100 pb-4 mb-6">
-                    <h2 className="text-2xl font-black text-gray-900 flex items-center gap-2">
-                      <Sparkles size={24} className="text-[#F7A221]" />
+                    <h2 className="text-2xl font-medium text-gray-900 flex items-center gap-2">
                       <span>Custom Gift Design Details</span>
                     </h2>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-gray-500 mt-1 capitalize">
                       Tell us about your gifting requirement. Fields marked with{" "}
                       <span className="text-red-500 font-bold">*</span> are required.
                     </p>
@@ -723,32 +722,43 @@ export default function CustomizeGiftPage() {
                     </div>
                   </div>
 
-                  {/* Row 6: Two Uploading Fields: 1. Logo  2. Reference Design (Compact, Max 3 each) */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* ── 1. Logo & 2. Product Reference Upload Section ── */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     {/* ── 1. Logo Field ── */}
-                    <div className="bg-gray-50/60 border border-gray-200 rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between">
+                    <div
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={handleLogoDrop}
+                      className="bg-white border border-gray-200 hover:border-gray-300 rounded-2xl p-4 sm:p-5 shadow-xs transition-all flex flex-col justify-between"
+                    >
                       <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <label className="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center gap-1.5">
-                            <Sparkles size={14} className="text-[#F7A221]" />
-                            <span>1. Logo</span>
-                            <span className="text-gray-400 font-normal lowercase text-[11px]">(optional)</span>
-                          </label>
+                        {/* Header: Title + Subtitle + Pinned Status Badge */}
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <Sparkles size={14} className="text-[#F7A221] shrink-0" />
+                              <span className="text-xs font-bold uppercase tracking-wider text-gray-900">
+                                1. Logo
+                              </span>
+                              <span className="text-[11px] text-gray-400 font-normal lowercase">
+                                (optional)
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-gray-500 mt-1 leading-snug">
+                              Brand logo or artwork (PNG, JPG, WEBP, SVG or PDF &bull; max 5 MB)
+                            </p>
+                          </div>
                           <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            className={`shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap ${
                               logoFiles.length === 3
-                                ? "bg-emerald-100 text-emerald-800"
+                                ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
                                 : logoFiles.length > 0
                                 ? "bg-amber-100 text-amber-900 border border-amber-300"
-                                : "bg-amber-50 text-amber-800 border border-amber-200/80"
+                                : "bg-amber-50 text-amber-800 border border-amber-200"
                             }`}
                           >
                             {logoFiles.length}/3 files
                           </span>
                         </div>
-                        <p className="text-[11px] text-gray-500 mb-3">
-                          Upload brand logo or artwork (Images or PDF &bull; Max 5 MB each).
-                        </p>
 
                         {/* Grid preview of uploaded logo files */}
                         {logoFiles.length > 0 && (
@@ -757,7 +767,7 @@ export default function CustomizeGiftPage() {
                               <div
                                 key={item.id}
                                 onClick={() => setPreviewModal(item)}
-                                className="relative group aspect-square rounded-xl overflow-hidden border-2 border-gray-200 hover:border-[#F7A221] bg-white shadow-2xs transition-all flex items-center justify-center p-1.5 cursor-pointer"
+                                className="relative group aspect-square rounded-xl overflow-hidden border-2 border-gray-200 hover:border-[#F7A221] bg-gray-50/50 shadow-2xs transition-all flex items-center justify-center p-1.5 cursor-pointer"
                                 title="Click to preview"
                               >
                                 {item.preview ? (
@@ -769,25 +779,25 @@ export default function CustomizeGiftPage() {
                                 ) : (
                                   <div className="flex flex-col items-center justify-center p-1 text-center w-full">
                                     <FileCheck2 size={24} className="text-[#D97706] mb-1 shrink-0" />
-                                    <span className="text-[10px] font-bold text-gray-800 truncate max-w-full leading-tight">
+                                    <span className="text-[10px] font-bold text-gray-800 truncate max-w-full">
                                       {item.name || "PDF File"}
                                     </span>
                                     <span className="text-[9px] text-[#D97706] font-semibold mt-0.5">
-                                      👁 Click to view
+                                      👁 View
                                     </span>
                                   </div>
                                 )}
 
-                                {/* Hover overlay with eye icon */}
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                                {/* Hover overlay */}
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none rounded-lg">
                                   <span className="text-[10px] font-bold text-white bg-black/60 px-2 py-0.5 rounded-full flex items-center gap-1">
                                     <Eye size={12} />
-                                    <span>Preview</span>
+                                    <span>View</span>
                                   </span>
                                 </div>
 
                                 {/* Badge number */}
-                                <span className="absolute bottom-1 left-1.5 bg-black/70 text-white text-[9px] font-bold px-1.5 py-0.5 rounded z-10 pointer-events-none">
+                                <span className="absolute bottom-1 left-1.5 bg-black/75 text-white text-[9px] font-bold px-1.5 py-0.5 rounded z-10 pointer-events-none">
                                   #{idx + 1}
                                 </span>
 
@@ -801,22 +811,22 @@ export default function CustomizeGiftPage() {
                                   className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/75 hover:bg-red-600 text-white flex items-center justify-center transition-colors shadow-sm cursor-pointer z-20"
                                   title={`Remove ${item.name}`}
                                 >
-                                  <X size={13} />
+                                  <X size={12} />
                                 </button>
                               </div>
                             ))}
 
-                            {/* Inline '+ Add' slot if under 3 files */}
+                            {/* Inline '+ Add More' slot if under 3 files */}
                             {logoFiles.length < 3 && (
                               <label
                                 htmlFor="gift-logo-upload"
-                                className="aspect-square rounded-xl border-2 border-dashed border-gray-300 hover:border-[#F7A221] bg-white/80 hover:bg-orange-50/40 flex flex-col items-center justify-center cursor-pointer transition-all text-center p-2 group"
+                                className="aspect-square rounded-xl border-2 border-dashed border-gray-300 hover:border-[#F7A221] bg-white hover:bg-orange-50/40 flex flex-col items-center justify-center cursor-pointer transition-all text-center p-2 group"
                               >
-                                <div className="w-7 h-7 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-center mb-1 group-hover:scale-105 group-hover:border-[#F7A221] transition-transform">
-                                  <Upload size={13} className="text-gray-500 group-hover:text-[#F7A221]" />
+                                <div className="w-8 h-8 rounded-lg bg-orange-50 border border-orange-200 flex items-center justify-center mb-1 group-hover:scale-110 group-hover:bg-[#F7A221] transition-all">
+                                  <Upload size={14} className="text-[#F7A221] group-hover:text-white transition-colors" />
                                 </div>
                                 <span className="text-[11px] font-bold text-gray-800 group-hover:text-[#D97706] leading-tight">
-                                  + Add Logo
+                                  + Add More
                                 </span>
                                 <span className="text-[9px] text-gray-400 mt-0.5">
                                   ({3 - logoFiles.length} left)
@@ -827,43 +837,29 @@ export default function CustomizeGiftPage() {
                         )}
                       </div>
 
-                      {/* Dropzone when empty, or helper bar when files are attached */}
+                      {/* Dropzone when empty, or completion badge when full */}
                       <div>
                         {logoFiles.length === 0 ? (
                           <label
                             htmlFor="gift-logo-upload"
-                            onDragOver={(e) => e.preventDefault()}
-                            onDrop={handleLogoDrop}
-                            className="flex items-center justify-center gap-2.5 border-2 border-dashed border-gray-300 hover:border-[#F7A221] bg-white/80 hover:bg-orange-50/30 rounded-xl py-3 px-3 cursor-pointer transition-all text-center group"
+                            className="flex flex-col items-center justify-center py-6 px-4 border-2 border-dashed border-gray-200 hover:border-[#F7A221] bg-gray-50/40 hover:bg-orange-50/20 rounded-xl cursor-pointer transition-all text-center group"
                           >
-                            <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-center shrink-0 group-hover:scale-105 group-hover:border-[#F7A221] transition-transform">
-                              <Upload size={16} className="text-gray-500 group-hover:text-[#F7A221]" />
+                            <div className="w-10 h-10 rounded-xl bg-orange-50 border border-orange-200 flex items-center justify-center mb-2 group-hover:scale-110 group-hover:bg-[#F7A221] transition-all">
+                              <Upload size={18} className="text-[#F7A221] group-hover:text-white transition-colors" />
                             </div>
-                            <div className="text-left">
-                              <p className="text-xs font-bold text-gray-800 group-hover:text-[#D97706] leading-tight">
-                                Upload Logo Files
-                              </p>
-                              <p className="text-[10px] text-gray-400 leading-tight mt-0.5">
-                                Select up to 3 files (PNG, JPG, WEBP, SVG or PDF &bull; Max 5 MB)
-                              </p>
-                            </div>
+                            <p className="text-xs font-bold text-gray-800 group-hover:text-[#D97706] transition-colors">
+                              Upload Logo / Artwork
+                            </p>
+                            <p className="text-[11px] text-gray-400 mt-0.5">
+                              Click to browse or drag & drop (up to 3 files)
+                            </p>
                           </label>
                         ) : logoFiles.length === 3 ? (
                           <div className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl py-2 px-3 text-center flex items-center justify-center gap-1.5">
                             <CheckCircle2 size={14} className="text-emerald-600" />
-                            <span>Max 3 logo files attached</span>
+                            <span>All 3 logo files attached</span>
                           </div>
-                        ) : (
-                          <label
-                            htmlFor="gift-logo-upload"
-                            className="flex items-center justify-center gap-2 border border-gray-200 hover:border-[#F7A221] bg-white hover:bg-orange-50/20 rounded-xl py-2 px-3 cursor-pointer transition-all text-center group"
-                          >
-                            <Upload size={13} className="text-gray-500 group-hover:text-[#F7A221]" />
-                            <span className="text-xs font-bold text-gray-700 group-hover:text-[#D97706]">
-                              Click to add another logo ({3 - logoFiles.length} slots left)
-                            </span>
-                          </label>
-                        )}
+                        ) : null}
 
                         <input
                           id="gift-logo-upload"
@@ -877,30 +873,41 @@ export default function CustomizeGiftPage() {
                       </div>
                     </div>
 
-                    {/* ── 2. Reference Design Field ── */}
-                    <div className="bg-gray-50/60 border border-gray-200 rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between">
+                    {/* ── 2. Product Reference Field ── */}
+                    <div
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={handleReferenceDrop}
+                      className="bg-white border border-gray-200 hover:border-gray-300 rounded-2xl p-4 sm:p-5 shadow-xs transition-all flex flex-col justify-between"
+                    >
                       <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <label className="text-xs font-bold uppercase tracking-wider text-gray-800 flex items-center gap-1.5">
-                            <ImageIcon size={14} className="text-[#F7A221]" />
-                            <span>2. Product Reference</span>
-                            <span className="text-gray-400 font-normal lowercase text-[11px]">(optional)</span>
-                          </label>
+                        {/* Header: Title + Subtitle + Pinned Status Badge */}
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <ImageIcon size={14} className="text-[#F7A221] shrink-0" />
+                              <span className="text-xs font-bold uppercase tracking-wider text-gray-900">
+                                2. Product Reference
+                              </span>
+                              <span className="text-[11px] text-gray-400 font-normal lowercase">
+                                (optional)
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-gray-500 mt-1 leading-snug">
+                              Sample designs or references (PNG, JPG, WEBP, SVG or PDF &bull; max 5 MB)
+                            </p>
+                          </div>
                           <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            className={`shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap ${
                               referenceFiles.length === 6
-                                ? "bg-emerald-100 text-emerald-800"
+                                ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
                                 : referenceFiles.length > 0
                                 ? "bg-amber-100 text-amber-900 border border-amber-300"
-                                : "bg-amber-50 text-amber-800 border border-amber-200/80"
+                                : "bg-amber-50 text-amber-800 border border-amber-200"
                             }`}
                           >
-                            {referenceFiles.length}/6 photos
+                            {referenceFiles.length}/6 files
                           </span>
                         </div>
-                        <p className="text-[11px] text-gray-500 mb-3">
-                          Upload sample designs or references (Images only &bull; Max 5 MB each).
-                        </p>
 
                         {/* Grid preview of uploaded reference photos */}
                         {referenceFiles.length > 0 && (
@@ -909,25 +916,37 @@ export default function CustomizeGiftPage() {
                               <div
                                 key={item.id}
                                 onClick={() => setPreviewModal(item)}
-                                className="relative group aspect-square rounded-xl overflow-hidden border-2 border-gray-200 hover:border-[#F7A221] bg-white shadow-2xs transition-all cursor-pointer"
+                                className="relative group aspect-square rounded-xl overflow-hidden border-2 border-gray-200 hover:border-[#F7A221] bg-gray-50/50 shadow-2xs transition-all flex items-center justify-center p-1 cursor-pointer"
                                 title="Click to preview"
                               >
-                                <img
-                                  src={item.preview || item.url}
-                                  alt={item.name}
-                                  className="w-full h-full object-cover"
-                                />
+                                {item.preview ? (
+                                  <img
+                                    src={item.preview || item.url}
+                                    alt={item.name}
+                                    className="w-full h-full object-cover rounded-lg"
+                                  />
+                                ) : (
+                                  <div className="flex flex-col items-center justify-center p-1 text-center w-full">
+                                    <FileCheck2 size={24} className="text-[#D97706] mb-1 shrink-0" />
+                                    <span className="text-[10px] font-bold text-gray-800 truncate max-w-full">
+                                      {item.name || "PDF File"}
+                                    </span>
+                                    <span className="text-[9px] text-[#D97706] font-semibold mt-0.5">
+                                      👁 View
+                                    </span>
+                                  </div>
+                                )}
 
-                                {/* Dark overlay on hover */}
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                                {/* Hover overlay */}
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none rounded-lg">
                                   <span className="text-[10px] font-bold text-white bg-black/60 px-2 py-0.5 rounded-full flex items-center gap-1">
                                     <Eye size={12} />
-                                    <span>Preview</span>
+                                    <span>View</span>
                                   </span>
                                 </div>
 
-                                {/* Photo number badge */}
-                                <span className="absolute bottom-1 left-1.5 bg-black/70 text-white text-[9px] font-bold px-1.5 py-0.5 rounded z-10 pointer-events-none">
+                                {/* Badge number */}
+                                <span className="absolute bottom-1 left-1.5 bg-black/75 text-white text-[9px] font-bold px-1.5 py-0.5 rounded z-10 pointer-events-none">
                                   #{idx + 1}
                                 </span>
 
@@ -941,27 +960,22 @@ export default function CustomizeGiftPage() {
                                   className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/75 hover:bg-red-600 text-white flex items-center justify-center transition-colors shadow-sm cursor-pointer z-20"
                                   title={`Remove ${item.name}`}
                                 >
-                                  <X size={13} />
+                                  <X size={12} />
                                 </button>
-
-                                {/* File size */}
-                                <span className="absolute bottom-1 right-1.5 text-[9px] text-gray-200 truncate max-w-[55%] pointer-events-none z-10">
-                                  {item.size}
-                                </span>
                               </div>
                             ))}
 
-                            {/* Inline '+ Add' slot if under 6 photos */}
+                            {/* Inline '+ Add More' slot if under 6 photos */}
                             {referenceFiles.length < 6 && (
                               <label
                                 htmlFor="gift-reference-upload"
-                                className="aspect-square rounded-xl border-2 border-dashed border-gray-300 hover:border-[#F7A221] bg-white/80 hover:bg-orange-50/40 flex flex-col items-center justify-center cursor-pointer transition-all text-center p-2 group"
+                                className="aspect-square rounded-xl border-2 border-dashed border-gray-300 hover:border-[#F7A221] bg-white hover:bg-orange-50/40 flex flex-col items-center justify-center cursor-pointer transition-all text-center p-2 group"
                               >
-                                <div className="w-7 h-7 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-center mb-1 group-hover:scale-105 group-hover:border-[#F7A221] transition-transform">
-                                  <Upload size={13} className="text-gray-500 group-hover:text-[#F7A221]" />
+                                <div className="w-8 h-8 rounded-lg bg-orange-50 border border-orange-200 flex items-center justify-center mb-1 group-hover:scale-110 group-hover:bg-[#F7A221] transition-all">
+                                  <Upload size={14} className="text-[#F7A221] group-hover:text-white transition-colors" />
                                 </div>
                                 <span className="text-[11px] font-bold text-gray-800 group-hover:text-[#D97706] leading-tight">
-                                  + Add Photo
+                                  + Add More
                                 </span>
                                 <span className="text-[9px] text-gray-400 mt-0.5">
                                   ({6 - referenceFiles.length} left)
@@ -972,50 +986,36 @@ export default function CustomizeGiftPage() {
                         )}
                       </div>
 
-                      {/* Dropzone when empty, or helper bar when files are attached */}
+                      {/* Dropzone when empty, or completion badge when full */}
                       <div>
                         {referenceFiles.length === 0 ? (
                           <label
                             htmlFor="gift-reference-upload"
-                            onDragOver={(e) => e.preventDefault()}
-                            onDrop={handleReferenceDrop}
-                            className="flex items-center justify-center gap-2.5 border-2 border-dashed border-gray-300 hover:border-[#F7A221] bg-white/80 hover:bg-orange-50/30 rounded-xl py-3 px-3 cursor-pointer transition-all text-center group"
+                            className="flex flex-col items-center justify-center py-6 px-4 border-2 border-dashed border-gray-200 hover:border-[#F7A221] bg-gray-50/40 hover:bg-orange-50/20 rounded-xl cursor-pointer transition-all text-center group"
                           >
-                            <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-center shrink-0 group-hover:scale-105 group-hover:border-[#F7A221] transition-transform">
-                              <Upload size={16} className="text-gray-500 group-hover:text-[#F7A221]" />
+                            <div className="w-10 h-10 rounded-xl bg-orange-50 border border-orange-200 flex items-center justify-center mb-2 group-hover:scale-110 group-hover:bg-[#F7A221] transition-all">
+                              <Upload size={18} className="text-[#F7A221] group-hover:text-white transition-colors" />
                             </div>
-                            <div className="text-left">
-                              <p className="text-xs font-bold text-gray-800 group-hover:text-[#D97706] leading-tight">
-                                Upload Reference Photos
-                              </p>
-                              <p className="text-[10px] text-gray-400 leading-tight mt-0.5">
-                                Select 1–6 images (JPG, PNG, WEBP &bull; Max 5 MB each)
-                              </p>
-                            </div>
+                            <p className="text-xs font-bold text-gray-800 group-hover:text-[#D97706] transition-colors">
+                              Upload Reference Files / PDF
+                            </p>
+                            <p className="text-[11px] text-gray-400 mt-0.5">
+                              Click to browse or drag & drop (up to 6 files)
+                            </p>
                           </label>
                         ) : referenceFiles.length === 6 ? (
                           <div className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl py-2 px-3 text-center flex items-center justify-center gap-1.5">
                             <CheckCircle2 size={14} className="text-emerald-600" />
-                            <span>Max 6 reference photos attached</span>
+                            <span>All 6 reference files attached</span>
                           </div>
-                        ) : (
-                          <label
-                            htmlFor="gift-reference-upload"
-                            className="flex items-center justify-center gap-2 border border-gray-200 hover:border-[#F7A221] bg-white hover:bg-orange-50/20 rounded-xl py-2 px-3 cursor-pointer transition-all text-center group"
-                          >
-                            <Upload size={13} className="text-gray-500 group-hover:text-[#F7A221]" />
-                            <span className="text-xs font-bold text-gray-700 group-hover:text-[#D97706]">
-                              Click to add another photo ({6 - referenceFiles.length} slots left)
-                            </span>
-                          </label>
-                        )}
+                        ) : null}
 
                         <input
                           id="gift-reference-upload"
                           ref={referenceInputRef}
                           type="file"
                           multiple
-                          accept="image/*,.jpg,.jpeg,.png,.webp,.svg"
+                          accept="image/*,.jpg,.jpeg,.png,.webp,.svg,.pdf,application/pdf"
                           onChange={handleReferenceFilesChange}
                           className="hidden"
                         />
