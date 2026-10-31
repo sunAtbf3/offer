@@ -19,7 +19,6 @@ import {
   Check,
   Search,
 } from "lucide-react";
-import { FaWhatsapp } from "react-icons/fa";
 
 // ── Complete Indian States & Union Territories (28 States + 8 UTs) ─────────────
 const INDIAN_STATES_AND_UTS = [
@@ -66,7 +65,6 @@ const INDIAN_STATES_AND_UTS = [
 export default function BulkOrderPage() {
   const [status, setStatus] = useState("idle"); // idle | loading | success | error
   const [isDuplicate, setIsDuplicate] = useState(false);
-  const [submittedData, setSubmittedData] = useState(null);
   const [formData, setFormData] = useState({
     contactPerson: "",
     email: "",
@@ -131,6 +129,14 @@ export default function BulkOrderPage() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    if (name === "phone") {
+      setFormData((prev) => ({ ...prev, phone: String(value).replace(/\D/g, "").slice(0, 10) }));
+      return;
+    }
+    if (name === "orderVolume") {
+      setFormData((prev) => ({ ...prev, orderVolume: String(value).replace(/\D/g, "").slice(0, 6) }));
+      return;
+    }
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -205,6 +211,14 @@ export default function BulkOrderPage() {
     if (normalizedPhone.length !== 10 || !/^[6-9]\d{9}$/.test(normalizedPhone)) {
       toast.error("Please enter a valid 10-digit Indian phone / WhatsApp number");
       return;
+    }
+
+    if (formData.orderVolume.trim()) {
+      const volume = parseInt(formData.orderVolume.trim(), 10);
+      if (!/^\d+$/.test(formData.orderVolume.trim()) || volume < 1 || volume > 100000) {
+        toast.error("Order volume must be a number between 1 and 100000");
+        return;
+      }
     }
 
     // 3. Email validation (Optional, only validate format if provided)
@@ -294,12 +308,10 @@ export default function BulkOrderPage() {
       if (response.status === 201) {
         setStatus("success");
         setIsDuplicate(false);
-        setSubmittedData(data.data || null);
         toast.success(data.message || "Bulk order inquiry submitted successfully!");
       } else if (response.status === 200 && data.alreadyRegistered) {
         setStatus("success");
         setIsDuplicate(true);
-        setSubmittedData(data.data || null);
         toast.info(data.message || "We already have your enquiry. Our team will contact you shortly.");
       } else {
         setStatus("idle");
@@ -332,7 +344,6 @@ export default function BulkOrderPage() {
     generateCaptcha();
     setStatus("idle");
     setIsDuplicate(false);
-    setSubmittedData(null);
   };
 
   return (
@@ -380,13 +391,7 @@ export default function BulkOrderPage() {
                       : `Thank you, ${formData.contactPerson || "Partner"}! Our wholesale procurement manager will review your requirement and connect with you on WhatsApp / Phone within 24 hours.`}
                   </p>
 
-                  {submittedData?.id && (
-                    <div className="inline-block bg-amber-50 border border-amber-200 text-amber-900 px-4 py-1.5 rounded-full text-xs font-mono font-bold mb-6">
-                      Reference ID: #{submittedData.id}
-                    </div>
-                  )}
-
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6">
                     <button
                       type="button"
                       onClick={handleReset}
@@ -395,15 +400,6 @@ export default function BulkOrderPage() {
                       <RefreshCw size={16} />
                       <span>Submit Another Inquiry</span>
                     </button>
-                    <a
-                      href="https://wa.me/918888888888?text=Hi%20Offer%20Wale%20Baba,%20I%20just%20submitted%20a%20bulk%20order%20inquiry!"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 text-white font-bold text-sm hover:bg-emerald-700 transition-all shadow-md"
-                    >
-                      <FaWhatsapp size={18} />
-                      <span>Chat on WhatsApp</span>
-                    </a>
                   </div>
                 </div>
               ) : (
@@ -451,9 +447,11 @@ export default function BulkOrderPage() {
                           type="tel"
                           name="phone"
                           required
+                          inputMode="numeric"
+                          maxLength={10}
                           value={formData.phone}
                           onChange={handleInputChange}
-                          placeholder="+91 98765 43210"
+                          placeholder="9876543210"
                           className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:bg-white focus:border-[#F7A221] focus:ring-4 focus:ring-[#F7A221]/15 transition-all outline-none"
                         />
                         <Phone
@@ -497,11 +495,14 @@ export default function BulkOrderPage() {
                         </span>
                       </label>
                       <input
-                        type="text"
+                        type="number"
                         name="orderVolume"
+                        min={1}
+                        max={100000}
+                        inputMode="numeric"
                         value={formData.orderVolume}
                         onChange={handleInputChange}
-                        placeholder="e.g. 100 pcs, 500 units, 1 master carton"
+                        placeholder="e.g. 100"
                         className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:bg-white focus:border-[#F7A221] focus:ring-4 focus:ring-[#F7A221]/15 transition-all outline-none"
                       />
                     </div>

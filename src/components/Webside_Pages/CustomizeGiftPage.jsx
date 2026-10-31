@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
@@ -17,20 +17,60 @@ import {
   Send,
   Image as ImageIcon,
   ChevronDown,
-  Eye
+  Eye,
+  Search,
+  Check,
 } from "lucide-react";
-import { FaWhatsapp } from "react-icons/fa";
+
+const INDIAN_STATES_AND_UTS = [
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+  "Andaman and Nicobar Islands",
+  "Chandigarh",
+  "Dadra and Nagar Haveli and Daman and Diu",
+  "Delhi (NCT)",
+  "Jammu and Kashmir",
+  "Ladakh",
+  "Lakshadweep",
+  "Puducherry",
+].sort((a, b) => a.localeCompare(b));
 
 export default function CustomizeGiftPage() {
   const [status, setStatus] = useState("idle"); // idle | loading | success | error
   const [isDuplicate, setIsDuplicate] = useState(false);
-  const [submittedData, setSubmittedData] = useState(null);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
     phone: "",
     organizationName: "",
-    cityState: "",
+    city: "",
+    state: "",
     occasion: "",
     giftCategory: "",
     quantity: "",
@@ -39,9 +79,10 @@ export default function CustomizeGiftPage() {
   });
 
   const [customOccasion, setCustomOccasion] = useState("");
-  const [customCategory, setCustomCategory] = useState("");
   const [isCustomOccasion, setIsCustomOccasion] = useState(false);
-  const [isCustomCategory, setIsCustomCategory] = useState(false);
+  const [isStateOpen, setIsStateOpen] = useState(false);
+  const [stateSearch, setStateSearch] = useState("");
+  const stateDropdownRef = useRef(null);
 
   // ── Multiple File Upload State (Max 3 files each) ──────────────
   const [referenceFiles, setReferenceFiles] = useState([]); // [{ id, file, preview, name, size }]
@@ -82,10 +123,36 @@ export default function CustomizeGiftPage() {
     generateCaptcha();
   }, []);
 
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (stateDropdownRef.current && !stateDropdownRef.current.contains(event.target)) {
+        setIsStateOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    if (name === "phone") {
+      setFormData((prev) => ({ ...prev, phone: String(value).replace(/\D/g, "").slice(0, 10) }));
+      return;
+    }
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
+
+  const handleSelectState = (st) => {
+    setFormData((prev) => ({ ...prev, state: st }));
+    setIsStateOpen(false);
+    setStateSearch("");
+  };
+
+  const filteredStates = useMemo(() => {
+    const q = stateSearch.trim().toLowerCase();
+    if (!q) return INDIAN_STATES_AND_UTS;
+    return INDIAN_STATES_AND_UTS.filter((st) => st.toLowerCase().includes(q));
+  }, [stateSearch]);
 
   const handleOccasionChange = (e) => {
     const val = e.target.value;
@@ -96,18 +163,6 @@ export default function CustomizeGiftPage() {
       setIsCustomOccasion(false);
       setCustomOccasion("");
       setFormData((prev) => ({ ...prev, occasion: val }));
-    }
-  };
-
-  const handleCategoryChange = (e) => {
-    const val = e.target.value;
-    if (val === "Other Specific Request") {
-      setIsCustomCategory(true);
-      setFormData((prev) => ({ ...prev, giftCategory: "Other Specific Request" }));
-    } else {
-      setIsCustomCategory(false);
-      setCustomCategory("");
-      setFormData((prev) => ({ ...prev, giftCategory: val }));
     }
   };
 
@@ -256,8 +311,13 @@ export default function CustomizeGiftPage() {
       return;
     }
 
-    if (!formData.cityState.trim() || formData.cityState.trim().length < 2) {
-      toast.error("Please enter your City & State");
+    if (!formData.city.trim() || formData.city.trim().length < 2) {
+      toast.error("Please enter your city / district");
+      return;
+    }
+
+    if (!formData.state.trim()) {
+      toast.error("Please select your state from the dropdown");
       return;
     }
 
@@ -270,12 +330,9 @@ export default function CustomizeGiftPage() {
       return;
     }
 
-    const finalCategory =
-      formData.giftCategory === "Other Specific Request" && customCategory.trim()
-        ? customCategory.trim()
-        : formData.giftCategory;
-    if (!finalCategory || finalCategory === "Other Specific Request" || finalCategory.length < 2) {
-      toast.error("Please select or enter a gift category");
+    const finalCategory = formData.giftCategory.trim();
+    if (!finalCategory || finalCategory.length < 2) {
+      toast.error("Please enter a gift category");
       return;
     }
 
@@ -298,10 +355,9 @@ export default function CustomizeGiftPage() {
       }
     }
 
-    // Message is required
     const msg = formData.instructions.trim();
-    if (!msg) {
-      toast.error("Please enter customization notes / message");
+    if (msg && msg.length < 10) {
+      toast.error("Customization notes must be at least 10 characters if provided");
       return;
     }
     if (msg.length > 2000) {
@@ -336,7 +392,10 @@ export default function CustomizeGiftPage() {
         fd.append("email", formData.email.trim().toLowerCase());
       }
       fd.append("phone", normalizedPhone);
-      fd.append("city", formData.cityState.trim());
+      fd.append("city", formData.city.trim());
+      if (formData.state.trim()) {
+        fd.append("state", formData.state.trim());
+      }
       if (formData.organizationName && formData.organizationName.trim()) {
         fd.append("organizationName", formData.organizationName.trim());
       }
@@ -346,7 +405,9 @@ export default function CustomizeGiftPage() {
       if (formData.deliveryDate) {
         fd.append("targetDeliveryDate", formData.deliveryDate);
       }
-      fd.append("message", msg);
+      if (msg) {
+        fd.append("message", msg);
+      }
 
       referenceFiles.forEach((item) => fd.append("referencePhotos", item.file));
       logoFiles.forEach((item) => fd.append("logos", item.file));
@@ -368,12 +429,10 @@ export default function CustomizeGiftPage() {
       if (response.status === 201) {
         setStatus("success");
         setIsDuplicate(false);
-        setSubmittedData(data?.data || null);
         toast.success(data?.message || "Thanks! We received your enquiry and will contact you shortly.");
       } else if (response.status === 200 && data?.alreadyRegistered) {
         setStatus("success");
         setIsDuplicate(true);
-        setSubmittedData(data?.data || null);
         toast.info(data?.message || "We already have your enquiry. Our team will contact you shortly.");
       } else {
         setStatus("idle");
@@ -392,7 +451,8 @@ export default function CustomizeGiftPage() {
       email: "",
       phone: "",
       organizationName: "",
-      cityState: "",
+      city: "",
+      state: "",
       occasion: "",
       giftCategory: "",
       quantity: "",
@@ -400,14 +460,13 @@ export default function CustomizeGiftPage() {
       instructions: "",
     });
     setCustomOccasion("");
-    setCustomCategory("");
     setIsCustomOccasion(false);
-    setIsCustomCategory(false);
+    setIsStateOpen(false);
+    setStateSearch("");
     clearAllFiles();
     generateCaptcha();
     setStatus("idle");
     setIsDuplicate(false);
-    setSubmittedData(null);
   };
 
   return (
@@ -455,13 +514,7 @@ export default function CustomizeGiftPage() {
                       : `Thank you, ${formData.fullName || "Friend"}! We have received your custom gifting request. Our gifting specialist will prepare sample options & pricing within 24 hours.`}
                   </p>
 
-                  {submittedData?.id && (
-                    <div className="inline-block bg-amber-50 border border-amber-200 text-amber-900 px-4 py-1.5 rounded-full text-xs font-mono font-bold mb-6">
-                      Reference ID: #{submittedData.id}
-                    </div>
-                  )}
-
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6">
                     <button
                       type="button"
                       onClick={handleReset}
@@ -470,15 +523,6 @@ export default function CustomizeGiftPage() {
                       <RefreshCw size={16} />
                       <span>Create Another Gift</span>
                     </button>
-                    <a
-                      href="https://wa.me/918888888888?text=Hi%20Offer%20Wale%20Baba,%20I%20just%20submitted%20a%20Customized%20Gift%20inquiry!"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 text-white font-bold text-sm hover:bg-emerald-700 transition-all shadow-md"
-                    >
-                      <FaWhatsapp size={18} />
-                      <span>Chat on WhatsApp</span>
-                    </a>
                   </div>
                 </div>
               ) : (
@@ -540,9 +584,11 @@ export default function CustomizeGiftPage() {
                           type="tel"
                           name="phone"
                           required
+                          inputMode="numeric"
+                          maxLength={10}
                           value={formData.phone}
                           onChange={handleInputChange}
-                          placeholder="+91 98765 43210"
+                          placeholder="9876543210"
                           className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:bg-white focus:border-[#F7A221] focus:ring-4 focus:ring-[#F7A221]/15 transition-all outline-none"
                         />
                         <Phone size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -551,39 +597,118 @@ export default function CustomizeGiftPage() {
 
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-2">
-                        City &amp; State <span className="text-red-500">*</span>
+                        Company / Organization Name <span className="text-gray-400 text-[11px] font-normal lowercase">(optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="organizationName"
+                        value={formData.organizationName}
+                        onChange={handleInputChange}
+                        placeholder="Company / organization name"
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:bg-white focus:border-[#F7A221] focus:ring-4 focus:ring-[#F7A221]/15 transition-all outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-2">
+                        City / District <span className="text-red-500">*</span>
                       </label>
                       <div className="relative">
                         <input
                           type="text"
-                          name="cityState"
+                          name="city"
                           required
-                          value={formData.cityState}
+                          value={formData.city}
                           onChange={handleInputChange}
-                          placeholder="e.g. Pune, Maharashtra"
+                          placeholder="e.g. Mumbai, Pune, Surat"
                           className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:bg-white focus:border-[#F7A221] focus:ring-4 focus:ring-[#F7A221]/15 transition-all outline-none"
                         />
                         <MapPin size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                       </div>
                     </div>
+
+                    <div className="relative" ref={stateDropdownRef}>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-2">
+                        State / Union Territory <span className="text-red-500">*</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setIsStateOpen((prev) => !prev)}
+                        className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-900 focus:bg-white focus:border-[#F7A221] focus:ring-4 focus:ring-[#F7A221]/15 transition-all outline-none cursor-pointer text-left"
+                      >
+                        <span className={formData.state ? "text-gray-900 font-medium" : "text-gray-400"}>
+                          {formData.state || "Select State / Union Territory"}
+                        </span>
+                        <ChevronDown
+                          size={18}
+                          className={`text-gray-400 transition-transform duration-200 ${
+                            isStateOpen ? "rotate-180 text-[#F7A221]" : ""
+                          }`}
+                        />
+                      </button>
+
+                      {isStateOpen && (
+                        <div className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 overflow-hidden animate-fadeIn">
+                          <div className="p-2.5 border-b border-gray-100 bg-gray-50/80 sticky top-0">
+                            <div className="relative">
+                              <Search
+                                size={16}
+                                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                              />
+                              <input
+                                type="text"
+                                autoFocus
+                                value={stateSearch}
+                                onChange={(e) => setStateSearch(e.target.value)}
+                                placeholder="Search all states & UTs..."
+                                className="w-full pl-9 pr-8 py-2 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:border-[#F7A221] outline-none"
+                              />
+                              {stateSearch && (
+                                <button
+                                  type="button"
+                                  onClick={() => setStateSearch("")}
+                                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5 cursor-pointer"
+                                >
+                                  <X size={14} />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="max-h-60 overflow-y-auto divide-y divide-gray-50 text-xs sm:text-sm">
+                            {filteredStates.length > 0 ? (
+                              filteredStates.map((st) => {
+                                const isSelected = formData.state === st;
+                                return (
+                                  <button
+                                    key={st}
+                                    type="button"
+                                    onClick={() => handleSelectState(st)}
+                                    className={`w-full flex items-center justify-between px-4 py-2.5 text-left transition-colors cursor-pointer ${
+                                      isSelected
+                                        ? "bg-amber-50 text-[#D97706] font-bold"
+                                        : "text-gray-700 hover:bg-gray-50"
+                                    }`}
+                                  >
+                                    <span>{st}</span>
+                                    {isSelected && <Check size={16} className="text-[#D97706]" />}
+                                  </button>
+                                );
+                              })
+                            ) : (
+                              <div className="p-4 text-center text-xs text-gray-400">
+                                No state found matching "{stateSearch}"
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Company / Organization Name (Optional) */}
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-2">
-                      Company / Organization Name <span className="text-gray-400 text-[11px] font-normal lowercase">(optional)</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="organizationName"
-                      value={formData.organizationName}
-                      onChange={handleInputChange}
-                      placeholder="e.g. Acme Tech Solutions Pvt Ltd"
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:bg-white focus:border-[#F7A221] focus:ring-4 focus:ring-[#F7A221]/15 transition-all outline-none"
-                    />
-                  </div>
-
-                  {/* Row 3: Occasion & Gift Category (Direct in-place input if "Other") */}
+                  {/* Row 3: Occasion & Gift Category */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     {/* Occasion field */}
                     <div>
@@ -636,55 +761,19 @@ export default function CustomizeGiftPage() {
                       )}
                     </div>
 
-                    {/* Gift Category field */}
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-2">
                         Gift Category / Product Type <span className="text-red-500">*</span>
                       </label>
-                      {formData.giftCategory === "Other Specific Request" || isCustomCategory ? (
-                        <div className="relative animate-fadeIn">
-                          <input
-                            type="text"
-                            required
-                            value={customCategory}
-                            onChange={(e) => setCustomCategory(e.target.value)}
-                            placeholder="Type your gift category / product request..."
-                            autoFocus
-                            className="w-full pl-4 pr-28 py-3 bg-white border-2 border-[#F7A221] rounded-xl text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:ring-4 focus:ring-[#F7A221]/15 transition-all outline-none"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsCustomCategory(false);
-                              setCustomCategory("");
-                              setFormData((prev) => ({ ...prev, giftCategory: "" }));
-                            }}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 px-2.5 py-1.5 text-xs font-bold text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors cursor-pointer flex items-center gap-1"
-                            title="Back to dropdown options"
-                          >
-                            <span>Select list</span>
-                            <ChevronDown size={14} />
-                          </button>
-                        </div>
-                      ) : (
-                        <select
-                          name="giftCategory"
-                          required
-                          value={formData.giftCategory}
-                          onChange={handleCategoryChange}
-                          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-900 focus:bg-white focus:border-[#F7A221] focus:ring-4 focus:ring-[#F7A221]/15 transition-all outline-none cursor-pointer"
-                        >
-                          <option value="">Select Product Category</option>
-                          <option value="Executive Hampers & Gift Boxes">Executive Hampers &amp; Gift Boxes</option>
-                          <option value="Custom Insulated Drinkware & Mugs">Custom Insulated Drinkware &amp; Mugs</option>
-                          <option value="Smart Gadgets & Tech Accessories">Smart Gadgets &amp; Tech Accessories</option>
-                          <option value="Diaries, Metal Pens & Stationery Kits">Diaries, Metal Pens &amp; Stationery Kits</option>
-                          <option value="Artificial Jewellery & Fashion Keepsakes">Artificial Jewellery &amp; Fashion Keepsakes</option>
-                          <option value="Custom T-Shirts, Hoodies & Caps">Custom T-Shirts, Hoodies &amp; Caps</option>
-                          <option value="Home & Kitchen Lifestyle Sets">Home &amp; Kitchen Lifestyle Sets</option>
-                          <option value="Other Specific Request">Other Specific Request (Specify / Type your own)</option>
-                        </select>
-                      )}
+                      <input
+                        type="text"
+                        name="giftCategory"
+                        required
+                        value={formData.giftCategory}
+                        onChange={handleInputChange}
+                        placeholder="e.g. Gift hamper, custom mug, branded kit"
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:bg-white focus:border-[#F7A221] focus:ring-4 focus:ring-[#F7A221]/15 transition-all outline-none"
+                      />
                     </div>
                   </div>
 
@@ -1026,11 +1115,11 @@ export default function CustomizeGiftPage() {
                   {/* Row 7: Special Instructions / Message */}
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-2">
-                      Customization Notes &amp; Special Instructions <span className="text-red-500">*</span>
+                      Customization Notes &amp; Special Instructions{" "}
+                      <span className="text-gray-400 font-normal lowercase">(optional)</span>
                     </label>
                     <textarea
                       name="instructions"
-                      required
                       rows={4}
                       value={formData.instructions}
                       onChange={handleInputChange}
